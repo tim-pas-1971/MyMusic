@@ -1,13 +1,18 @@
-c - La mia Musica</title>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyMusic - La mia Musica</title>
   <link rel="stylesheet" href="style.css">
   
-  <!-- Firebase SDK -->
+  <!-- Firebase SDK (Manteniamo il collegamento cloud) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-  <!-- Navigation / Header -->
+  <!-- Header dell'App -->
   <header class="app-header">
     <div class="logo-container">
       <span class="logo-icon">🎵</span>
@@ -18,12 +23,12 @@ c - La mia Musica</title>
     </div>
   </header>
 
-  <!-- Sidebar & Main Content Layout -->
+  <!-- Layout Principale -->
   <div class="main-layout">
     
-    <!-- Generi / Navigation Sidebar -->
+    <!-- Sidebar Generi -->
     <nav class="sidebar">
-      <h2 class="sidebar-title">Generi</h2>
+      <h2 class="sidebar-title">GENERI</h2>
       <ul class="genre-list">
         <li><button class="nav-btn active" data-genre="all">Tutti i Generi</button></li>
         <li><button class="nav-btn" data-genre="Pop">Pop</button></li>
@@ -36,10 +41,10 @@ c - La mia Musica</title>
       </ul>
     </nav>
 
-    <!-- Main Section -->
+    <!-- Area Contenuto Principale -->
     <main class="content-area">
       
-      <!-- Top Bar: Search & Export/Import -->
+      <!-- Controlli Superiori (Ricerca e Data Management) -->
       <div class="top-controls">
         <input type="text" id="searchInput" placeholder="Cerca per titolo o artista..." class="search-input">
         
@@ -53,7 +58,7 @@ c - La mia Musica</title>
 
       <h2 id="currentGenreTitle" class="section-title">Tutti i Generi</h2>
 
-      <!-- Songs Cards Grid -->
+      <!-- Griglia delle Canzoni -->
       <div id="songsContainer" class="songs-grid">
         <p style="color:#64748b;">Caricamento brani in corso...</p>
       </div>
@@ -62,7 +67,7 @@ c - La mia Musica</title>
 
   </div>
 
-  <!-- Modal per Aggiungere / Modificare Brano -->
+  <!-- Modal (Finestra) per Aggiungere / Modificare Brano -->
   <div id="songModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
