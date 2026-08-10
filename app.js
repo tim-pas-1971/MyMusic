@@ -1,81 +1,97 @@
-let songsList = JSON.parse(localStorage.getItem("myMusic_songs")) || [];
+let songsList = [];
+
+// Carica i brani salvati all'avvio
+try {
+  songsList = JSON.parse(localStorage.getItem("myMusic_songs")) || [];
+} catch (e) {
+  songsList = [];
+}
+
 let currentSelectedGenre = "all";
 
-// Elementi DOM
-const modal = document.getElementById("songModal");
-const openModalBtn = document.getElementById("openModalBtn");
-const closeModalBtn = document.getElementById("closeModalBtn");
-const addSongForm = document.getElementById("addSongForm");
-const modalTitle = document.getElementById("modalTitle");
-const navButtons = document.querySelectorAll(".nav-btn");
-const currentGenreTitle = document.getElementById("currentGenreTitle");
-const songsContainer = document.getElementById("songsContainer");
-const searchInput = document.getElementById("searchInput");
-
-// Event Listener Iniziali
 document.addEventListener("DOMContentLoaded", () => {
   renderSongs();
 
-  openModalBtn.addEventListener("click", () => openModal());
-  closeModalBtn.addEventListener("click", () => closeModal());
-  window.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
-let songsList = JSON.parse(localStorage.getItem("myMusic_songs")) || [];
-let currentSelectedGenre = "all";
+  // Apertura/Chiusura Modale
+  document.getElementById("openModalBtn").onclick = () => openModal();
+  document.getElementById("closeModalBtn").onclick = () => closeModal();
+  
+  window.onclick = (e) => { 
+    if (e.target === document.getElementById("songModal")) closeModal(); 
+  };
 
-// Elementi DOM
-const modal = document.getElementById("songModal");
-const openModalBtn = document.getElementById("openModalBtn");
-const closeModalBtn = document.getElementById("closeModalBtn");
-const addSongForm = document.getElementById("addSongForm");
-const modalTitle = document.getElementById("modalTitle");
-const navButtons = document.querySelectorAll(".nav-btn");
-const currentGenreTitle = document.getElementById("currentGenreTitle");
-const songsContainer = document.getElementById("songsContainer");
-const searchInput = document.getElementById("searchInput");
+  // Ricerca
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) searchInput.oninput = () => renderSongs();
 
-// Event Listener Iniziali
-document.addEventListener("DOMContentLoaded", () => {
-  renderSongs();
-
-  if (openModalBtn) openModalBtn.addEventListener("click", () => openModal());
-  if (closeModalBtn) closeModalBtn.addEventListener("click", () => closeModal());
-  window.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
-
-  if (searchInput) searchInput.addEventListener("input", renderSongs);
-
-  // Gestione Pagine Generi
-  navButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      navButtons.forEach(b => b.classList.remove("active"));
+  // Cambia Genere (Sidebar)
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
 
       currentSelectedGenre = btn.getAttribute("data-genre");
-      currentGenreTitle.innerText = currentSelectedGenre === "all" ? "Tutti i Generi" : currentSelectedGenre;
+      document.getElementById("currentGenreTitle").innerText = 
+        currentSelectedGenre === "all" ? "Tutti i Generi" : currentSelectedGenre;
+      
       renderSongs();
-    });
+    };
   });
 
-  // Import / Export
-  const exportJsonBtn = document.getElementById("exportJsonBtn");
-  const importJsonInput = document.getElementById("importJsonInput");
-  const exportExcelBtn = document.getElementById("exportExcelBtn");
+  // Salva Form (Aggiungi o Modifica)
+  document.getElementById("addSongForm").onsubmit = (e) => {
+    e.preventDefault();
 
-  if (exportJsonBtn) exportJsonBtn.addEventListener("click", exportJSON);
-  if (importJsonInput) importJsonInput.addEventListener("change", importJSON);
-  if (exportExcelBtn) exportExcelBtn.addEventListener("click", exportExcel);
+    const id = document.getElementById("songId").value;
+    const artist = document.getElementById("artist").value.trim();
+    const photoUrl = document.getElementById("artistPhotoUrl").value.trim();
+    const title = document.getElementById("title").value.trim();
+    const year = document.getElementById("year").value.trim();
+    const genre = document.getElementById("genre").value;
+    const youtubeUrl = document.getElementById("youtubeUrl").value.trim();
+
+    if (id) {
+      // Modifica
+      const idx = songsList.findIndex(s => s.id === id);
+      if (idx !== -1) {
+        songsList[idx] = { id, artist, photoUrl, title, year, genre, youtubeUrl };
+      }
+    } else {
+      // Nuovo
+      const newSong = {
+        id: Date.now().toString(),
+        artist,
+        photoUrl,
+        title,
+        year,
+        genre,
+        youtubeUrl
+      };
+      songsList.push(newSong);
+    }
+
+    saveSongs();
+    closeModal();
+    alert("Brano salvato con successo!");
+  };
+
+  // Import / Export
+  document.getElementById("exportJsonBtn").onclick = exportJSON;
+  document.getElementById("importJsonInput").onchange = importJSON;
+  document.getElementById("exportExcelBtn").onclick = exportExcel;
 });
 
-// Salva e aggiorna LocalStorage
 function saveSongs() {
   localStorage.setItem("myMusic_songs", JSON.stringify(songsList));
   renderSongs();
 }
 
-// Apertura/Chiusura Modale
 function openModal(songToEdit = null) {
-  addSongForm.reset();
+  const form = document.getElementById("addSongForm");
+  form.reset();
+
   if (songToEdit) {
-    modalTitle.innerText = "Modifica Brano";
+    document.getElementById("modalTitle").innerText = "Modifica Brano";
     document.getElementById("songId").value = songToEdit.id;
     document.getElementById("artist").value = songToEdit.artist;
     document.getElementById("artistPhotoUrl").value = songToEdit.photoUrl || "";
@@ -84,74 +100,32 @@ function openModal(songToEdit = null) {
     document.getElementById("genre").value = songToEdit.genre;
     document.getElementById("youtubeUrl").value = songToEdit.youtubeUrl;
   } else {
-    modalTitle.innerText = "Aggiungi Nuovo Brano";
+    document.getElementById("modalTitle").innerText = "Aggiungi Nuovo Brano";
     document.getElementById("songId").value = "";
   }
-  modal.style.display = "flex";
+
+  document.getElementById("songModal").style.display = "flex";
 }
 
 function closeModal() {
-  modal.style.display = "none";
+  document.getElementById("songModal").style.display = "none";
 }
 
-// Invio Form (Aggiungi o Modifica)
-addSongForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-
-  const id = document.getElementById("songId").value;
-  const artist = document.getElementById("artist").value;
-  const photoUrl = document.getElementById("artistPhotoUrl").value;
-  const title = document.getElementById("title").value;
-  const year = document.getElementById("year").value;
-  const genre = document.getElementById("genre").value;
-  const youtubeUrl = document.getElementById("youtubeUrl").value;
-
-  if (id) {
-    // Modifica
-    const index = songsList.findIndex(s => s.id === id);
-    if (index !== -1) {
-      songsList[index] = { id, artist, photoUrl, title, year, genre, youtubeUrl };
-    }
-  } else {
-    // Nuovo
-    const newSong = {
-      id: Date.now().toString(),
-      artist,
-      photoUrl,
-      title,
-      year,
-      genre,
-      youtubeUrl
-    };
-    songsList.push(newSong);
-  }
-
-  saveSongs();
-  closeModal();
-});
-
-// Elimina Brano
-function deleteSong(id) {
-  if (confirm("Sei sicuro di voler eliminare questo brano?")) {
-    songsList = songsList.filter(s => s.id !== id);
-    saveSongs();
-  }
-}
-
-// Mostra i brani
 function renderSongs() {
-  if (!songsContainer) return;
-  songsContainer.innerHTML = "";
-  const searchTerm = searchInput ? searchInput.value.toLowerCase() : "";
+  const container = document.getElementById("songsContainer");
+  if (!container) return;
+
+  container.innerHTML = "";
+  const searchVal = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase() : "";
 
   const filtered = songsList.filter(song => {
-    const matchesGenre = currentSelectedGenre === "all" || song.genre === currentSelectedGenre;
-    const matchesSearch = song.title.toLowerCase().includes(searchTerm) || song.artist.toLowerCase().includes(searchTerm);
-    return matchesGenre && matchesSearch;
+    const matchGenre = currentSelectedGenre === "all" || song.genre === currentSelectedGenre;
+    const matchSearch = song.title.toLowerCase().includes(searchVal) || song.artist.toLowerCase().includes(searchVal);
+    return matchGenre && matchSearch;
   });
 
   if (filtered.length === 0) {
-    songsContainer.innerHTML = "<p>Nessun brano trovato.</p>";
+    container.innerHTML = "<p style='color:#64748b;'>Nessun brano presente in questa sezione.</p>";
     return;
   }
 
@@ -159,9 +133,11 @@ function renderSongs() {
     const card = document.createElement("div");
     card.className = "song-card";
 
+    const initial = song.artist ? song.artist.charAt(0).toUpperCase() : "?";
     const imageHtml = song.photoUrl 
-      ? `<img src="${song.photoUrl}" alt="${song.artist}" class="artist-img" onerror="this.onerror=null;this.src='https://via.placeholder.com/250x150?text=Immagine+Non+Valida';">`
-      : `<div class="artist-img" style="display:flex;align-items:center;justify-content:center;color:#888;">Nessuna Foto</div>`;
+      ? `<img src="${song.photoUrl}" alt="${song.artist}" class="artist-img" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+         <div class="artist-img" style="display:none; align-items:center; justify-content:center; color:#64748b; font-weight:bold; font-size: 2rem;">${initial}</div>`
+      : `<div class="artist-img" style="display:flex; align-items:center; justify-content:center; color:#64748b; font-weight:bold; font-size: 2rem;">${initial}</div>`;
 
     card.innerHTML = `
       <div>
@@ -172,7 +148,7 @@ function renderSongs() {
         <p class="card-info"><strong>Genere:</strong> ${song.genre}</p>
       </div>
       <div class="card-actions">
-        <a href="${song.youtubeUrl}" target="_blank" style="color:#2563eb;font-weight:bold;font-size:0.85rem;text-decoration:none;">▶ YouTube</a>
+        <a href="${song.youtubeUrl}" target="_blank" style="color:#2563eb; font-weight:bold; font-size:0.85rem; text-decoration:none;">▶ YouTube</a>
         <div>
           <button class="icon-btn" onclick='editSong("${song.id}")' title="Modifica">✏️</button>
           <button class="icon-btn" onclick='deleteSong("${song.id}")' title="Elimina">🗑️</button>
@@ -180,25 +156,30 @@ function renderSongs() {
       </div>
     `;
 
-    songsContainer.appendChild(card);
+    container.appendChild(card);
   });
 }
 
-// Helper modifica
 window.editSong = function(id) {
   const song = songsList.find(s => s.id === id);
   if (song) openModal(song);
 };
 
-// Funzioni Export/Import
+window.deleteSong = function(id) {
+  if (confirm("Vuoi davvero eliminare questo brano?")) {
+    songsList = songsList.filter(s => s.id !== id);
+    saveSongs();
+  }
+};
+
 function exportJSON() {
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(songsList, null, 2));
-  const downloadAnchor = document.createElement('a');
-  downloadAnchor.setAttribute("href", dataStr);
-  downloadAnchor.setAttribute("download", "MyMusic_Backup.json");
-  document.body.appendChild(downloadAnchor);
-  downloadAnchor.click();
-  downloadAnchor.remove();
+  const a = document.createElement('a');
+  a.setAttribute("href", dataStr);
+  a.setAttribute("download", "MyMusic_Backup.json");
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
 function importJSON(event) {
@@ -208,16 +189,16 @@ function importJSON(event) {
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
-      const importedData = JSON.parse(e.target.result);
-      if (Array.isArray(importedData)) {
-        songsList = importedData;
+      const data = JSON.parse(e.target.result);
+      if (Array.isArray(data)) {
+        songsList = data;
         saveSongs();
-        alert("Importazione completata con successo!");
+        alert("Importazione completata!");
       } else {
-        alert("Il file JSON non ha un formato valido.");
+        alert("File non valido.");
       }
     } catch (err) {
-      alert("Errore nella lettura del file JSON.");
+      alert("Errore nel file JSON.");
     }
   };
   reader.readAsText(file);
@@ -229,18 +210,17 @@ function exportExcel() {
     return;
   }
 
-  let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-  csvContent += "Artista;Titolo;Anno;Genere;Link YouTube;Link Foto\n";
+  let csv = "data:text/csv;charset=utf-8,\uFEFF";
+  csv += "Artista;Titolo;Anno;Genere;Link YouTube;Link Foto\n";
 
   songsList.forEach(s => {
-    csvContent += `"${s.artist}";"${s.title}";"${s.year || ''}";"${s.genre}";"${s.youtubeUrl}";"${s.photoUrl || ''}"\n`;
+    csv += `"${s.artist}";"${s.title}";"${s.year || ''}";"${s.genre}";"${s.youtubeUrl}";"${s.photoUrl || ''}"\n`;
   });
 
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "MyMusic_Canzoni.csv");
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+  const a = document.createElement("a");
+  a.setAttribute("href", encodeURI(csv));
+  a.setAttribute("download", "MyMusic_Canzoni.csv");
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
