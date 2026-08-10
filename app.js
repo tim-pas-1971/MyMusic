@@ -1,6 +1,5 @@
 let songsList = [];
 
-// Carica i brani salvati all'avvio
 try {
   songsList = JSON.parse(localStorage.getItem("myMusic_songs")) || [];
 } catch (e) {
@@ -12,7 +11,6 @@ let currentSelectedGenre = "all";
 document.addEventListener("DOMContentLoaded", () => {
   renderSongs();
 
-  // Apertura/Chiusura Modale
   document.getElementById("openModalBtn").onclick = () => openModal();
   document.getElementById("closeModalBtn").onclick = () => closeModal();
   
@@ -20,11 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target === document.getElementById("songModal")) closeModal(); 
   };
 
-  // Ricerca
   const searchInput = document.getElementById("searchInput");
   if (searchInput) searchInput.oninput = () => renderSongs();
 
-  // Cambia Genere (Sidebar)
   document.querySelectorAll(".nav-btn").forEach(btn => {
     btn.onclick = () => {
       document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
@@ -38,7 +34,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   });
 
-  // Salva Form (Aggiungi o Modifica)
   document.getElementById("addSongForm").onsubmit = (e) => {
     e.preventDefault();
 
@@ -51,13 +46,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const youtubeUrl = document.getElementById("youtubeUrl").value.trim();
 
     if (id) {
-      // Modifica
       const idx = songsList.findIndex(s => s.id === id);
       if (idx !== -1) {
         songsList[idx] = { id, artist, photoUrl, title, year, genre, youtubeUrl };
       }
     } else {
-      // Nuovo
       const newSong = {
         id: Date.now().toString(),
         artist,
@@ -75,7 +68,6 @@ document.addEventListener("DOMContentLoaded", () => {
     alert("Brano salvato con successo!");
   };
 
-  // Import / Export
   document.getElementById("exportJsonBtn").onclick = exportJSON;
   document.getElementById("importJsonInput").onchange = importJSON;
   document.getElementById("exportExcelBtn").onclick = exportExcel;
@@ -111,6 +103,16 @@ function closeModal() {
   document.getElementById("songModal").style.display = "none";
 }
 
+// Convertitore universale Link Google Drive (Audio o Immagine)
+function convertDriveUrl(url) {
+  if (!url) return "";
+  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    return `https://docs.google.com/uc?export=view&id=${match[1]}`;
+  }
+  return url;
+}
+
 function renderSongs() {
   const container = document.getElementById("songsContainer");
   if (!container) return;
@@ -134,10 +136,26 @@ function renderSongs() {
     card.className = "song-card";
 
     const initial = song.artist ? song.artist.charAt(0).toUpperCase() : "?";
-    const imageHtml = song.photoUrl 
-      ? `<img src="${song.photoUrl}" alt="${song.artist}" class="artist-img" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    
+    // Gestione Foto (Converte automaticamente se è un link Google Drive)
+    const processedPhotoUrl = convertDriveUrl(song.photoUrl);
+
+    const imageHtml = processedPhotoUrl 
+      ? `<img src="${processedPhotoUrl}" alt="${song.artist}" class="artist-img" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
          <div class="artist-img" style="display:none; align-items:center; justify-content:center; color:#64748b; font-weight:bold; font-size: 2rem;">${initial}</div>`
       : `<div class="artist-img" style="display:flex; align-items:center; justify-content:center; color:#64748b; font-weight:bold; font-size: 2rem;">${initial}</div>`;
+
+    // Gestione Player Audio
+    const isDrive = song.youtubeUrl.includes("drive.google.com");
+    const isMp3 = song.youtubeUrl.endsWith(".mp3");
+
+    let playerHtml = "";
+    if (isDrive || isMp3) {
+      const audioSrc = isDrive ? convertDriveUrl(song.youtubeUrl) : song.youtubeUrl;
+      playerHtml = `<audio controls style="width: 100%; margin-top: 0.5rem;"><source src="${audioSrc}" type="audio/mpeg">Il tuo browser non supporta l'audio.</audio>`;
+    } else {
+      playerHtml = `<a href="${song.youtubeUrl}" target="_blank" style="color:#2563eb; font-weight:bold; font-size:0.85rem; text-decoration:none;">▶ Ascolta su YouTube</a>`;
+    }
 
     card.innerHTML = `
       <div>
@@ -147,8 +165,11 @@ function renderSongs() {
         <p class="card-info"><strong>Anno:</strong> ${song.year || '-'}</p>
         <p class="card-info"><strong>Genere:</strong> ${song.genre}</p>
       </div>
+      <div style="margin-top:0.8rem;">
+        ${playerHtml}
+      </div>
       <div class="card-actions">
-        <a href="${song.youtubeUrl}" target="_blank" style="color:#2563eb; font-weight:bold; font-size:0.85rem; text-decoration:none;">▶ YouTube</a>
+        <span></span>
         <div>
           <button class="icon-btn" onclick='editSong("${song.id}")' title="Modifica">✏️</button>
           <button class="icon-btn" onclick='deleteSong("${song.id}")' title="Elimina">🗑️</button>
@@ -211,7 +232,7 @@ function exportExcel() {
   }
 
   let csv = "data:text/csv;charset=utf-8,\uFEFF";
-  csv += "Artista;Titolo;Anno;Genere;Link YouTube;Link Foto\n";
+  csv += "Artista;Titolo;Anno;Genere;Link YouTube/Drive;Link Foto\n";
 
   songsList.forEach(s => {
     csv += `"${s.artist}";"${s.title}";"${s.year || ''}";"${s.genre}";"${s.youtubeUrl}";"${s.photoUrl || ''}"\n`;
