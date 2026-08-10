@@ -9,15 +9,31 @@
 <body>
 
   <header>
-    <h1>🎵 MyMusic</h1>
-    <!-- Pulsante Principale Aggiungi -->
-    <button id="openModalBtn" class="btn primary-btn">+ Aggiungi Brano</button>
+    <div class="logo">
+      <h1>🎵 MyMusic</h1>
+    </div>
+
+    <!-- Barra Azioni e Ricerca -->
+    <div class="header-actions">
+      <input type="text" id="searchInput" placeholder="🔍 Cerca titolo o artista..." class="search-bar">
+      
+      <button id="openModalBtn" class="btn primary-btn">+ Aggiungi Brano</button>
+      
+      <button id="exportJsonBtn" class="btn secondary-btn" title="Esporta Backup JSON">📤 JSON</button>
+      
+      <label for="importJsonInput" class="btn secondary-btn" title="Importa File JSON">
+        📥 Importa
+        <input type="file" id="importJsonInput" accept=".json" style="display: none;">
+      </label>
+
+      <button id="exportExcelBtn" class="btn excel-btn" title="Esporta Foglio Excel">📊 Excel</button>
+    </div>
   </header>
 
   <!-- Contenitore Layout con Sidebar a sinistra -->
   <div class="layout-container">
     
-    <!-- Menu Navigazione Generi (Sidebar Verticale a Sinistra) -->
+    <!-- Sidebar Generi -->
     <nav class="genre-nav">
       <div class="sidebar-title">Generi Musicali</div>
       <button class="nav-btn active" data-genre="all">Tutti i Generi</button>
@@ -33,40 +49,42 @@
       <button class="nav-btn" data-genre="Metal / Punk">Metal / Punk</button>
       <button class="nav-btn" data-genre="Musica Classica">Musica Classica</button>
       <button class="nav-btn" data-genre="Musica Elettronica">Musica Elettronica</button>
-      <button class="nav-btn" data-genre="Pop">Pop</button>
+      <button class="nav-btn" data-genre="Pop">Pop</option>
       <button class="nav-btn" data-genre="Rap / Hip Hop">Rap / Hip Hop</button>
       <button class="nav-btn" data-genre="Rock">Rock</button>
       <button class="nav-btn" data-genre="Soul / Funk">Soul / Funk</button>
       <button class="nav-btn" data-genre="Altro">Altro</button>
     </nav>
 
-    <!-- Contenuto Principale con le Schede -->
+    <!-- Area Principale -->
     <main class="main-content">
       <h2 id="currentGenreTitle">Tutti i Generi</h2>
 
-      <!-- Contenitore delle Schede Brani -->
+      <!-- Contenitore Schede Brani -->
       <section id="songsContainer" class="songs-grid">
-        <!-- Qui appariranno i brani inseriti -->
+        <!-- Schede generate da JavaScript -->
       </section>
     </main>
 
   </div>
 
-  <!-- FINESTRA MODALE: Scheda "Aggiungi Brano" -->
+  <!-- MODALE: Inserimento / Modifica Brano -->
   <div id="songModal" class="modal">
     <div class="modal-content">
       <span id="closeModalBtn" class="close-btn">&times;</span>
-      <h2>Aggiungi Nuovo Brano</h2>
+      <h2 id="modalTitle">Aggiungi Nuovo Brano</h2>
       
       <form id="addSongForm">
+        <input type="hidden" id="songId">
+
         <div class="form-group">
           <label for="artist">Artista *</label>
           <input type="text" id="artist" required placeholder="Nome cantante/gruppo">
         </div>
 
         <div class="form-group">
-          <label for="artistPhoto">Foto Artista</label>
-          <input type="file" id="artistPhoto" accept="image/*">
+          <label for="artistPhotoUrl">Link Foto Artista (URL)</label>
+          <input type="url" id="artistPhotoUrl" placeholder="https://esempio.com/foto.jpg">
         </div>
 
         <div class="form-group">
