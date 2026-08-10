@@ -103,17 +103,11 @@ function closeModal() {
   document.getElementById("songModal").style.display = "none";
 }
 
-// Convertitore universale Link Google Drive (Audio o Immagine)
-function convertDriveUrl(url, isImage = false) {
+// Convertitore Link Dropbox (forza il download/stream diretto)
+function fixDropboxUrl(url) {
   if (!url) return "";
-  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-  if (match && match[1]) {
-    const id = match[1];
-    if (isImage) {
-      // Genera l'anteprima diretta per le immagini da Drive
-      return `https://drive.google.com/thumbnail?id=${id}&sz=w800`;
-    }
-    return `https://docs.google.com/uc?export=view&id=${id}`;
+  if (url.includes("dropbox.com")) {
+    return url.replace("dl=0", "raw=1").replace("dl=1", "raw=1");
   }
   return url;
 }
@@ -142,22 +136,22 @@ function renderSongs() {
 
     const initial = song.artist ? song.artist.charAt(0).toUpperCase() : "?";
     
-    // Gestione Foto (Converte automaticamente se è un link Google Drive)
-    const processedPhotoUrl = convertDriveUrl(song.photoUrl);
+    // Gestione Foto Dropbox / Web
+    const processedPhotoUrl = fixDropboxUrl(song.photoUrl);
 
     const imageHtml = processedPhotoUrl 
       ? `<img src="${processedPhotoUrl}" alt="${song.artist}" class="artist-img" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
          <div class="artist-img" style="display:none; align-items:center; justify-content:center; color:#64748b; font-weight:bold; font-size: 2rem;">${initial}</div>`
       : `<div class="artist-img" style="display:flex; align-items:center; justify-content:center; color:#64748b; font-weight:bold; font-size: 2rem;">${initial}</div>`;
 
-    // Gestione Player Audio
-    const isDrive = song.youtubeUrl.includes("drive.google.com");
-    const isMp3 = song.youtubeUrl.endsWith(".mp3");
+    // Gestione Player Audio / Link
+    const processedAudioUrl = fixDropboxUrl(song.youtubeUrl);
+    const isDropbox = song.youtubeUrl.includes("dropbox.com");
+    const isMp3 = song.youtubeUrl.toLowerCase().endsWith(".mp3");
 
     let playerHtml = "";
-    if (isDrive || isMp3) {
-      const audioSrc = isDrive ? convertDriveUrl(song.youtubeUrl) : song.youtubeUrl;
-      playerHtml = `<audio controls style="width: 100%; margin-top: 0.5rem;"><source src="${audioSrc}" type="audio/mpeg">Il tuo browser non supporta l'audio.</audio>`;
+    if (isDropbox || isMp3) {
+      playerHtml = `<audio controls style="width: 100%; margin-top: 0.5rem;"><source src="${processedAudioUrl}" type="audio/mpeg">Il tuo browser non supporta l'audio.</audio>`;
     } else {
       playerHtml = `<a href="${song.youtubeUrl}" target="_blank" style="color:#2563eb; font-weight:bold; font-size:0.85rem; text-decoration:none;">▶ Ascolta su YouTube</a>`;
     }
@@ -237,7 +231,7 @@ function exportExcel() {
   }
 
   let csv = "data:text/csv;charset=utf-8,\uFEFF";
-  csv += "Artista;Titolo;Anno;Genere;Link YouTube/Drive;Link Foto\n";
+  csv += "Artista;Titolo;Anno;Genere;Link Audio/YouTube;Link Foto\n";
 
   songsList.forEach(s => {
     csv += `"${s.artist}";"${s.title}";"${s.year || ''}";"${s.genre}";"${s.youtubeUrl}";"${s.photoUrl || ''}"\n`;
