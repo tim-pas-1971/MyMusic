@@ -1,15 +1,31 @@
+// Configurazione Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyAXgGNk2vCMkSFi7Ub6WSp7gBvJT7Mbi1Q",
+  authDomain: "studio-82288772-a99ab.firebaseapp.com",
+  projectId: "studio-82288772-a99ab",
+  storageBucket: "studio-82288772-a99ab.firebasestorage.app",
+  messagingSenderId: "48796554059",
+  appId: "1:48796554059:web:7cf1c63eadcba83af60ece"
+};
+
+// Inizializzazione Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
 let songsList = [];
-
-try {
-  songsList = JSON.parse(localStorage.getItem("myMusic_songs")) || [];
-} catch (e) {
-  songsList = [];
-}
-
 let currentSelectedGenre = "all";
 
 document.addEventListener("DOMContentLoaded", () => {
-  renderSongs();
+  // Ascolto in tempo reale da Firebase Database
+  db.collection("songs").onSnapshot((snapshot) => {
+    songsList = [];
+    snapshot.forEach((doc) => {
+      songsList.push({ id: doc.id, ...doc.data() });
+    });
+    renderSongs();
+  }, (error) => {
+    console.error("Errore Firebase:", error);
+  });
 
   document.getElementById("openModalBtn").onclick = () => openModal();
   document.getElementById("closeModalBtn").onclick = () => closeModal();
@@ -34,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   });
 
-  document.getElementById("addSongForm").onsubmit = (e) => {
+  document.getElementById("addSongForm").onsubmit = async (e) => {
     e.preventDefault();
 
     const id = document.getElementById("songId").value;
@@ -45,38 +61,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const genre = document.getElementById("genre").value;
     const youtubeUrl = document.getElementById("youtubeUrl").value.trim();
 
-    if (id) {
-      const idx = songsList.findIndex(s => s.id === id);
-      if (idx !== -1) {
-        songsList[idx] = { id, artist, photoUrl, title, year, genre, youtubeUrl };
-      }
-    } else {
-      const newSong = {
-        id: Date.now().toString(),
-        artist,
-        photoUrl,
-        title,
-        year,
-        genre,
-        youtubeUrl
-      };
-      songsList.push(newSong);
-    }
+    const songData = { artist, photoUrl, title, year, genre, youtubeUrl };
 
-    saveSongs();
-    closeModal();
-    alert("Brano salvato con successo!");
+    try {
+      if (id) {
+        await db.collection("songs").doc(id).update(songData);
+      } else {
+        await db.collection("songs").add(songData);
+      }
+      closeModal();
+    } catch (err) {
+      alert("Errore durante il salvataggio: " + err.message);
+    }
   };
 
   document.getElementById("exportJsonBtn").onclick = exportJSON;
   document.getElementById("importJsonInput").onchange = importJSON;
   document.getElementById("exportExcelBtn").onclick = exportExcel;
 });
-
-function saveSongs() {
-  localStorage.setItem("myMusic_songs", JSON.stringify(songsList));
-  renderSongs();
-}
 
 function openModal(songToEdit = null) {
   const form = document.getElementById("addSongForm");
@@ -103,7 +105,7 @@ function closeModal() {
   document.getElementById("songModal").style.display = "none";
 }
 
-// Convertitore Link Dropbox (forza il download/stream diretto)
+// Convertitore Link Dropbox
 function fixDropboxUrl(url) {
   if (!url) return "";
   if (url.includes("dropbox.com")) {
@@ -135,8 +137,6 @@ function renderSongs() {
     card.className = "song-card";
 
     const initial = song.artist ? song.artist.charAt(0).toUpperCase() : "?";
-    
-    // Gestione Foto Dropbox / Web
     const processedPhotoUrl = fixDropboxUrl(song.photoUrl);
 
     const imageHtml = processedPhotoUrl 
@@ -144,7 +144,6 @@ function renderSongs() {
          <div class="artist-img" style="display:none; align-items:center; justify-content:center; color:#64748b; font-weight:bold; font-size: 2rem;">${initial}</div>`
       : `<div class="artist-img" style="display:flex; align-items:center; justify-content:center; color:#64748b; font-weight:bold; font-size: 2rem;">${initial}</div>`;
 
-    // Gestione Player Audio / Link
     const processedAudioUrl = fixDropboxUrl(song.youtubeUrl);
     const isDropbox = song.youtubeUrl.includes("dropbox.com");
     const isMp3 = song.youtubeUrl.toLowerCase().endsWith(".mp3");
@@ -185,10 +184,13 @@ window.editSong = function(id) {
   if (song) openModal(song);
 };
 
-window.deleteSong = function(id) {
+window.deleteSong = async function(id) {
   if (confirm("Vuoi davvero eliminare questo brano?")) {
-    songsList = songsList.filter(s => s.id !== id);
-    saveSongs();
+    try {
+      await db.collection("songs").doc(id).delete();
+    } catch (err) {
+      alert("Errore eliminazione: " + err.message);
+    }
   }
 };
 
@@ -207,18 +209,20 @@ function importJSON(event) {
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     try {
       const data = JSON.parse(e.target.result);
       if (Array.isArray(data)) {
-        songsList = data;
-        saveSongs();
-        alert("Importazione completata!");
+        for (const song of data) {
+          delete song.id;
+          await db.collection("songs").add(song);
+        }
+        alert("Importazione su Cloud completata!");
       } else {
         alert("File non valido.");
       }
     } catch (err) {
-      alert("Errore nel file JSON.");
+      alert("Errore nell'importazione file.");
     }
   };
   reader.readAsText(file);
