@@ -14,37 +14,43 @@
     <button id="openModalBtn" class="btn primary-btn">+ Aggiungi Brano</button>
   </header>
 
-  <!-- Menu Navigazione Generi (Pagine) -->
-  <nav class="genre-nav">
-    <button class="nav-btn active" data-genre="all">Tutti i Generi</button>
-    <button class="nav-btn" data-genre="Arabian / Belly Dance">Arabian / Belly Dance</button>
-    <button class="nav-btn" data-genre="Blues">Blues</button>
-    <button class="nav-btn" data-genre="Classical Crossover">Classical Crossover</button>
-    <button class="nav-btn" data-genre="Country / Folk">Country / Folk</button>
-    <button class="nav-btn" data-genre="Dance / Disco">Dance / Disco</button>
-    <button class="nav-btn" data-genre="Gregoriana">Gregoriana</button>
-    <button class="nav-btn" data-genre="Jazz">Jazz</button>
-    <button class="nav-btn" data-genre="K-pop">K-pop</button>
-    <button class="nav-btn" data-genre="Latino">Latino</button>
-    <button class="nav-btn" data-genre="Metal / Punk">Metal / Punk</button>
-    <button class="nav-btn" data-genre="Musica Classica">Musica Classica</button>
-    <button class="nav-btn" data-genre="Musica Elettronica">Musica Elettronica</button>
-    <button class="nav-btn" data-genre="Pop">Pop</button>
-    <button class="nav-btn" data-genre="Rap / Hip Hop">Rap / Hip Hop</button>
-    <button class="nav-btn" data-genre="Rock">Rock</button>
-    <button class="nav-btn" data-genre="Soul / Funk">Soul / Funk</button>
-    <button class="nav-btn" data-genre="Altro">Altro</button>
-  </nav>
+  <!-- Contenitore Layout con Sidebar a sinistra -->
+  <div class="layout-container">
+    
+    <!-- Menu Navigazione Generi (Sidebar Verticale a Sinistra) -->
+    <nav class="genre-nav">
+      <div class="sidebar-title">Generi Musicali</div>
+      <button class="nav-btn active" data-genre="all">Tutti i Generi</button>
+      <button class="nav-btn" data-genre="Arabian / Belly Dance">Arabian / Belly Dance</button>
+      <button class="nav-btn" data-genre="Blues">Blues</button>
+      <button class="nav-btn" data-genre="Classical Crossover">Classical Crossover</button>
+      <button class="nav-btn" data-genre="Country / Folk">Country / Folk</button>
+      <button class="nav-btn" data-genre="Dance / Disco">Dance / Disco</button>
+      <button class="nav-btn" data-genre="Gregoriana">Gregoriana</button>
+      <button class="nav-btn" data-genre="Jazz">Jazz</button>
+      <button class="nav-btn" data-genre="K-pop">K-pop</button>
+      <button class="nav-btn" data-genre="Latino">Latino</button>
+      <button class="nav-btn" data-genre="Metal / Punk">Metal / Punk</button>
+      <button class="nav-btn" data-genre="Musica Classica">Musica Classica</button>
+      <button class="nav-btn" data-genre="Musica Elettronica">Musica Elettronica</button>
+      <button class="nav-btn" data-genre="Pop">Pop</button>
+      <button class="nav-btn" data-genre="Rap / Hip Hop">Rap / Hip Hop</button>
+      <button class="nav-btn" data-genre="Rock">Rock</button>
+      <button class="nav-btn" data-genre="Soul / Funk">Soul / Funk</button>
+      <button class="nav-btn" data-genre="Altro">Altro</button>
+    </nav>
 
-  <main class="container">
-    <!-- Intestazione pagina del genere corrente -->
-    <h2 id="currentGenreTitle">Tutti i Generi</h2>
+    <!-- Contenuto Principale con le Schede -->
+    <main class="main-content">
+      <h2 id="currentGenreTitle">Tutti i Generi</h2>
 
-    <!-- Contenitore delle Schede Brani -->
-    <section id="songsContainer" class="songs-grid">
-      <!-- Qui appariranno i brani inseriti -->
-    </section>
-  </main>
+      <!-- Contenitore delle Schede Brani -->
+      <section id="songsContainer" class="songs-grid">
+        <!-- Qui appariranno i brani inseriti -->
+      </section>
+    </main>
+
+  </div>
 
   <!-- FINESTRA MODALE: Scheda "Aggiungi Brano" -->
   <div id="songModal" class="modal">
