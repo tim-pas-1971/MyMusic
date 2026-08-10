@@ -1,1 +1,112 @@
-<!-- File HTML principale -->
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyMusic</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <h1>🎵 MyMusic</h1>
+    <!-- Pulsante Principale Aggiungi -->
+    <button id="openModalBtn" class="btn primary-btn">+ Aggiungi Brano</button>
+  </header>
+
+  <!-- Menu Navigazione Generi (Pagine) -->
+  <nav class="genre-nav">
+    <button class="nav-btn active" data-genre="all">Tutti i Generi</button>
+    <button class="nav-btn" data-genre="Arabian / Belly Dance">Arabian / Belly Dance</button>
+    <button class="nav-btn" data-genre="Blues">Blues</button>
+    <button class="nav-btn" data-genre="Classical Crossover">Classical Crossover</button>
+    <button class="nav-btn" data-genre="Country / Folk">Country / Folk</button>
+    <button class="nav-btn" data-genre="Dance / Disco">Dance / Disco</button>
+    <button class="nav-btn" data-genre="Gregoriana">Gregoriana</button>
+    <button class="nav-btn" data-genre="Jazz">Jazz</button>
+    <button class="nav-btn" data-genre="K-pop">K-pop</button>
+    <button class="nav-btn" data-genre="Latino">Latino</button>
+    <button class="nav-btn" data-genre="Metal / Punk">Metal / Punk</button>
+    <button class="nav-btn" data-genre="Musica Classica">Musica Classica</button>
+    <button class="nav-btn" data-genre="Musica Elettronica">Musica Elettronica</button>
+    <button class="nav-btn" data-genre="Pop">Pop</button>
+    <button class="nav-btn" data-genre="Rap / Hip Hop">Rap / Hip Hop</button>
+    <button class="nav-btn" data-genre="Rock">Rock</button>
+    <button class="nav-btn" data-genre="Soul / Funk">Soul / Funk</button>
+    <button class="nav-btn" data-genre="Altro">Altro</button>
+  </nav>
+
+  <main class="container">
+    <!-- Intestazione pagina del genere corrente -->
+    <h2 id="currentGenreTitle">Tutti i Generi</h2>
+
+    <!-- Contenitore delle Schede Brani -->
+    <section id="songsContainer" class="songs-grid">
+      <!-- Qui appariranno i brani inseriti -->
+    </section>
+  </main>
+
+  <!-- FINESTRA MODALE: Scheda "Aggiungi Brano" -->
+  <div id="songModal" class="modal">
+    <div class="modal-content">
+      <span id="closeModalBtn" class="close-btn">&times;</span>
+      <h2>Aggiungi Nuovo Brano</h2>
+      
+      <form id="addSongForm">
+        <div class="form-group">
+          <label for="artist">Artista *</label>
+          <input type="text" id="artist" required placeholder="Nome cantante/gruppo">
+        </div>
+
+        <div class="form-group">
+          <label for="artistPhoto">Foto Artista</label>
+          <input type="file" id="artistPhoto" accept="image/*">
+        </div>
+
+        <div class="form-group">
+          <label for="title">Titolo *</label>
+          <input type="text" id="title" required placeholder="Titolo della canzone">
+        </div>
+
+        <div class="form-group">
+          <label for="year">Anno</label>
+          <input type="number" id="year" placeholder="Es. 1985">
+        </div>
+
+        <div class="form-group">
+          <label for="genre">Genere *</label>
+          <select id="genre" required>
+            <option value="" disabled selected>Seleziona un genere...</option>
+            <option value="Arabian / Belly Dance">Arabian / Belly Dance</option>
+            <option value="Blues">Blues</option>
+            <option value="Classical Crossover">Classical Crossover</option>
+            <option value="Country / Folk">Country / Folk</option>
+            <option value="Dance / Disco">Dance / Disco</option>
+            <option value="Gregoriana">Gregoriana</option>
+            <option value="Jazz">Jazz</option>
+            <option value="K-pop">K-pop</option>
+            <option value="Latino">Latino</option>
+            <option value="Metal / Punk">Metal / Punk</option>
+            <option value="Musica Classica">Musica Classica</option>
+            <option value="Musica Elettronica">Musica Elettronica</option>
+            <option value="Pop">Pop</option>
+            <option value="Rap / Hip Hop">Rap / Hip Hop</option>
+            <option value="Rock">Rock</option>
+            <option value="Soul / Funk">Soul / Funk</option>
+            <option value="Altro">Altro</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="youtubeUrl">Link YouTube *</label>
+          <input type="url" id="youtubeUrl" required placeholder="https://www.youtube.com/watch?v=...">
+        </div>
+
+        <button type="submit" class="btn primary-btn submit-btn">Salva Brano</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
