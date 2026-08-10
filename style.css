@@ -9,10 +9,12 @@ body {
 header {
   background-color: #1e293b;
   color: white;
-  padding: 1rem 1.5rem;
+  padding: 0.8rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -20,16 +22,42 @@ header {
 
 header h1 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
 }
 
-/* Pulsanti */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.search-bar {
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #475569;
+  background-color: #0f172a;
+  color: white;
+  font-size: 0.88rem;
+  outline: none;
+}
+
+.search-bar::placeholder {
+  color: #94a3b8;
+}
+
+/* Pulsanti Header */
 .btn {
-  padding: 0.6rem 1.2rem;
+  padding: 0.5rem 0.9rem;
   border: none;
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  text-decoration: none;
 }
 
 .primary-btn {
@@ -41,13 +69,31 @@ header h1 {
   background-color: #1d4ed8;
 }
 
-/* Layout a colonne (Sidebar a sinistra + Contenuto a destra) */
-.layout-container {
-  display: flex;
-  min-height: calc(100vh - 70px);
+.secondary-btn {
+  background-color: #334155;
+  color: white;
 }
 
-/* Sidebar Generi (Sinistra) */
+.secondary-btn:hover {
+  background-color: #475569;
+}
+
+.excel-btn {
+  background-color: #16a34a;
+  color: white;
+}
+
+.excel-btn:hover {
+  background-color: #15803d;
+}
+
+/* Layout principale */
+.layout-container {
+  display: flex;
+  min-height: calc(100vh - 60px);
+}
+
+/* Sidebar Generi */
 .genre-nav {
   width: 240px;
   min-width: 240px;
@@ -57,36 +103,30 @@ header h1 {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  max-height: calc(100vh - 70px);
-  overflow-y: auto; /* Scorrimento verticale per la barra generi */
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
   position: sticky;
-  top: 70px;
+  top: 60px;
   box-sizing: border-box;
 }
 
 .sidebar-title {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: bold;
   color: #94a3b8;
   text-transform: uppercase;
-  margin-bottom: 0.5rem;
-  letter-spacing: 0.5px;
+  margin-bottom: 0.4rem;
 }
 
 .nav-btn {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  padding: 0.6rem 0.8rem;
+  padding: 0.55rem 0.8rem;
   border-radius: 8px;
   text-align: left;
   cursor: pointer;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   color: #334155;
-  transition: all 0.2s ease;
-}
-
-.nav-btn:hover {
-  background-color: #f1f5f9;
 }
 
 .nav-btn.active {
@@ -96,7 +136,7 @@ header h1 {
   border-color: #2563eb;
 }
 
-/* Area Contenuto Principale (Destra) */
+/* Main Content */
 .main-content {
   flex: 1;
   padding: 1.5rem;
@@ -107,20 +147,23 @@ header h1 {
   color: #1e293b;
 }
 
-/* Schede Brani */
+/* Griglia Schede Brani */
 .songs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.2rem;
   margin-top: 1rem;
 }
 
 .song-card {
   background: white;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .artist-img {
@@ -131,7 +174,41 @@ header h1 {
   background-color: #e2e8f0;
 }
 
-/* Modale (Finestra Aggiungi Brano) */
+.card-title {
+  font-size: 1.1rem;
+  margin: 0.8rem 0 0.3rem 0;
+  color: #0f172a;
+}
+
+.card-info {
+  font-size: 0.88rem;
+  color: #475569;
+  margin: 0.2rem 0;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+}
+
+.icon-btn:hover {
+  background-color: #f1f5f9;
+}
+
+/* Modale Form */
 .modal {
   display: none;
   position: fixed;
@@ -186,19 +263,4 @@ header h1 {
 .submit-btn {
   width: 100%;
   margin-top: 0.5rem;
-}
-
-/* Adattamento per schermi molto piccoli (Smartphone stretti) */
-@media (max-width: 600px) {
-  .layout-container {
-    flex-direction: column;
-  }
-  .genre-nav {
-    width: 100%;
-    max-height: 150px;
-    position: relative;
-    top: 0;
-    border-right: none;
-    border-bottom: 1px solid #e2e8f0;
-  }
 }
