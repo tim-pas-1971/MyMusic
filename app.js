@@ -8,6 +8,27 @@ const firebaseConfig = {
   appId: "1:48796554059:web:7cf1c63eadcba83af60ece"
 };
 
+// Mappa dei Colori per i Badge e le Sezioni
+const genreColors = {
+  "Arabian / Belly Dance": "#f59e0b",
+  "Blues": "#3b82f6",
+  "Classical Crossover": "#a855f7",
+  "Country / Folk": "#10b981",
+  "Dance / Disco": "#ec4899",
+  "Gregoriana": "#d97706",
+  "Jazz": "#eab308",
+  "K-pop": "#f472b6",
+  "Latino": "#ef4444",
+  "Metal / Punk": "#dc2626",
+  "Musica Classica": "#14b8a6",
+  "Musica Elettronica": "#06b6d4",
+  "Pop": "#ff6b81",
+  "Rap / Hip Hop": "#f97316",
+  "Rock": "#8b5cf6",
+  "Soul / Funk": "#c084fc",
+  "all": "#ec4899"
+};
+
 // Inizializzazione Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
@@ -16,7 +37,6 @@ let songsList = [];
 let currentSelectedGenre = "all";
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Ascolto in tempo reale da Firebase Database
   db.collection("songs").onSnapshot((snapshot) => {
     songsList = [];
     snapshot.forEach((doc) => {
@@ -46,8 +66,15 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.classList.add("active");
 
       currentSelectedGenre = btn.getAttribute("data-genre");
-      document.getElementById("currentGenreTitle").innerText = 
-        currentSelectedGenre === "all" ? "Tutti i Generi" : currentSelectedGenre;
+      
+      const genreTitleEl = document.getElementById("currentGenreTitle");
+      if (genreTitleEl) {
+        genreTitleEl.innerText = currentSelectedGenre === "all" ? "Tutti i Generi" : currentSelectedGenre;
+        
+        // Imposta il colore della barra del titolo in base al genere selezionato
+        const color = genreColors[currentSelectedGenre] || "#ec4899";
+        genreTitleEl.style.setProperty('--active-section-color', color);
+      }
       
       renderSongs();
     };
@@ -76,7 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         closeModal();
       } catch (err) {
-        alert("Errore durante il salvataggio: " + err.message);
+        alert("Errore salvataggio: " + err.message);
       }
     };
   }
@@ -116,7 +143,6 @@ function closeModal() {
   document.getElementById("songModal").style.display = "none";
 }
 
-// Convertitore Link Dropbox
 function fixDropboxUrl(url) {
   if (!url) return "";
   if (url.includes("dropbox.com")) {
@@ -139,21 +165,22 @@ function renderSongs() {
   });
 
   if (filtered.length === 0) {
-    container.innerHTML = "<p style='color:#94a3b8;'>Nessun brano presente in questa sezione.</p>";
+    container.innerHTML = "<p style='color:#cbd5e1;'>Nessun brano presente in questa sezione.</p>";
     return;
   }
 
-  filtered.forEach(song => {
+  filtered.forEach((song) => {
     const card = document.createElement("div");
     card.className = "song-card";
 
     const initial = song.artist ? song.artist.charAt(0).toUpperCase() : "?";
     const processedPhotoUrl = fixDropboxUrl(song.photoUrl);
+    const badgeColor = genreColors[song.genre] || "#f472b6";
 
     const imageHtml = processedPhotoUrl 
       ? `<img src="${processedPhotoUrl}" alt="${song.artist}" class="artist-img" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
-         <div class="artist-img" style="display:none; align-items:center; justify-content:center; color:#c084fc; font-weight:bold; font-size: 2.2rem; background:#0f172a;">${initial}</div>`
-      : `<div class="artist-img" style="display:flex; align-items:center; justify-content:center; color:#c084fc; font-weight:bold; font-size: 2.2rem; background:#0f172a;">${initial}</div>`;
+         <div class="artist-img" style="display:none; align-items:center; justify-content:center; color:#ffffff; font-weight:900; font-size: 2.5rem; background: linear-gradient(135deg, #334155, #0f172a);">${initial}</div>`
+      : `<div class="artist-img" style="display:flex; align-items:center; justify-content:center; color:#ffffff; font-weight:900; font-size: 2.5rem; background: linear-gradient(135deg, #334155, #0f172a);">${initial}</div>`;
 
     const processedAudioUrl = fixDropboxUrl(song.youtubeUrl);
     const isDropbox = song.youtubeUrl.includes("dropbox.com");
@@ -161,16 +188,16 @@ function renderSongs() {
 
     let playerHtml = "";
     if (isDropbox || isMp3) {
-      playerHtml = `<div class="audio-player-wrapper"><audio controls><source src="${processedAudioUrl}" type="audio/mpeg">Il tuo browser non supporta l'audio.</audio></div>`;
+      playerHtml = `<div class="audio-player-wrapper"><audio controls><source src="${processedAudioUrl}" type="audio/mpeg">Audio non supportato.</audio></div>`;
     } else {
-      playerHtml = `<a href="${song.youtubeUrl}" target="_blank" style="color:#ec4899; font-weight:bold; font-size:0.85rem; text-decoration:none; display:inline-block; margin-top:0.5rem;">▶ Ascolta su YouTube</a>`;
+      playerHtml = `<a href="${song.youtubeUrl}" target="_blank" style="color:${badgeColor}; font-weight:bold; font-size:0.85rem; text-decoration:none; display:inline-block; margin-top:0.5rem;">▶ Ascolta su YouTube</a>`;
     }
 
     card.innerHTML = `
       <div>
         <div class="artist-img-container">
           ${imageHtml}
-          <span class="genre-badge">${song.genre}</span>
+          <span class="genre-badge" style="--badge-color: ${badgeColor};">${song.genre}</span>
         </div>
         <h3 class="card-title">${song.title}</h3>
         <p class="card-info"><strong>Artista:</strong> ${song.artist}</p>
@@ -180,8 +207,8 @@ function renderSongs() {
         ${playerHtml}
       </div>
       <div class="card-actions admin-only">
-        <button class="icon-btn" onclick='editSong("${song.id}")' title="Modifica">✏️ Modifica</button>
-        <button class="icon-btn" onclick='deleteSong("${song.id}")' title="Elimina">🗑️ Elimina</button>
+        <button class="icon-btn" onclick='editSong("${song.id}")'>✏️ Modifica</button>
+        <button class="icon-btn" onclick='deleteSong("${song.id}")'>🗑️ Elimina</button>
       </div>
     `;
 
