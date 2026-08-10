@@ -27,8 +27,11 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error("Errore Firebase:", error);
   });
 
-  document.getElementById("openModalBtn").onclick = () => openModal();
-  document.getElementById("closeModalBtn").onclick = () => closeModal();
+  const openBtn = document.getElementById("openModalBtn");
+  if(openBtn) openBtn.onclick = () => openModal();
+
+  const closeBtn = document.getElementById("closeModalBtn");
+  if(closeBtn) closeBtn.onclick = () => closeModal();
   
   window.onclick = (e) => { 
     if (e.target === document.getElementById("songModal")) closeModal(); 
@@ -50,34 +53,42 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   });
 
-  document.getElementById("addSongForm").onsubmit = async (e) => {
-    e.preventDefault();
+  const form = document.getElementById("addSongForm");
+  if(form) {
+    form.onsubmit = async (e) => {
+      e.preventDefault();
 
-    const id = document.getElementById("songId").value;
-    const artist = document.getElementById("artist").value.trim();
-    const photoUrl = document.getElementById("artistPhotoUrl").value.trim();
-    const title = document.getElementById("title").value.trim();
-    const year = document.getElementById("year").value.trim();
-    const genre = document.getElementById("genre").value;
-    const youtubeUrl = document.getElementById("youtubeUrl").value.trim();
+      const id = document.getElementById("songId").value;
+      const artist = document.getElementById("artist").value.trim();
+      const photoUrl = document.getElementById("artistPhotoUrl").value.trim();
+      const title = document.getElementById("title").value.trim();
+      const year = document.getElementById("year").value.trim();
+      const genre = document.getElementById("genre").value;
+      const youtubeUrl = document.getElementById("youtubeUrl").value.trim();
 
-    const songData = { artist, photoUrl, title, year, genre, youtubeUrl };
+      const songData = { artist, photoUrl, title, year, genre, youtubeUrl };
 
-    try {
-      if (id) {
-        await db.collection("songs").doc(id).update(songData);
-      } else {
-        await db.collection("songs").add(songData);
+      try {
+        if (id) {
+          await db.collection("songs").doc(id).update(songData);
+        } else {
+          await db.collection("songs").add(songData);
+        }
+        closeModal();
+      } catch (err) {
+        alert("Errore durante il salvataggio: " + err.message);
       }
-      closeModal();
-    } catch (err) {
-      alert("Errore durante il salvataggio: " + err.message);
-    }
-  };
+    };
+  }
 
-  document.getElementById("exportJsonBtn").onclick = exportJSON;
-  document.getElementById("importJsonInput").onchange = importJSON;
-  document.getElementById("exportExcelBtn").onclick = exportExcel;
+  const exportBtn = document.getElementById("exportJsonBtn");
+  if(exportBtn) exportBtn.onclick = exportJSON;
+
+  const importInput = document.getElementById("importJsonInput");
+  if(importInput) importInput.onchange = importJSON;
+
+  const excelBtn = document.getElementById("exportExcelBtn");
+  if(excelBtn) excelBtn.onclick = exportExcel;
 });
 
 function openModal(songToEdit = null) {
@@ -128,7 +139,7 @@ function renderSongs() {
   });
 
   if (filtered.length === 0) {
-    container.innerHTML = "<p style='color:#64748b;'>Nessun brano presente in questa sezione.</p>";
+    container.innerHTML = "<p style='color:#94a3b8;'>Nessun brano presente in questa sezione.</p>";
     return;
   }
 
@@ -141,8 +152,8 @@ function renderSongs() {
 
     const imageHtml = processedPhotoUrl 
       ? `<img src="${processedPhotoUrl}" alt="${song.artist}" class="artist-img" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
-         <div class="artist-img" style="display:none; align-items:center; justify-content:center; color:#64748b; font-weight:bold; font-size: 2rem;">${initial}</div>`
-      : `<div class="artist-img" style="display:flex; align-items:center; justify-content:center; color:#64748b; font-weight:bold; font-size: 2rem;">${initial}</div>`;
+         <div class="artist-img" style="display:none; align-items:center; justify-content:center; color:#c084fc; font-weight:bold; font-size: 2.2rem; background:#0f172a;">${initial}</div>`
+      : `<div class="artist-img" style="display:flex; align-items:center; justify-content:center; color:#c084fc; font-weight:bold; font-size: 2.2rem; background:#0f172a;">${initial}</div>`;
 
     const processedAudioUrl = fixDropboxUrl(song.youtubeUrl);
     const isDropbox = song.youtubeUrl.includes("dropbox.com");
@@ -150,28 +161,27 @@ function renderSongs() {
 
     let playerHtml = "";
     if (isDropbox || isMp3) {
-      playerHtml = `<audio controls style="width: 100%; margin-top: 0.5rem;"><source src="${processedAudioUrl}" type="audio/mpeg">Il tuo browser non supporta l'audio.</audio>`;
+      playerHtml = `<div class="audio-player-wrapper"><audio controls><source src="${processedAudioUrl}" type="audio/mpeg">Il tuo browser non supporta l'audio.</audio></div>`;
     } else {
-      playerHtml = `<a href="${song.youtubeUrl}" target="_blank" style="color:#2563eb; font-weight:bold; font-size:0.85rem; text-decoration:none;">▶ Ascolta su YouTube</a>`;
+      playerHtml = `<a href="${song.youtubeUrl}" target="_blank" style="color:#ec4899; font-weight:bold; font-size:0.85rem; text-decoration:none; display:inline-block; margin-top:0.5rem;">▶ Ascolta su YouTube</a>`;
     }
 
     card.innerHTML = `
       <div>
-        ${imageHtml}
+        <div class="artist-img-container">
+          ${imageHtml}
+          <span class="genre-badge">${song.genre}</span>
+        </div>
         <h3 class="card-title">${song.title}</h3>
         <p class="card-info"><strong>Artista:</strong> ${song.artist}</p>
         <p class="card-info"><strong>Anno:</strong> ${song.year || '-'}</p>
-        <p class="card-info"><strong>Genere:</strong> ${song.genre}</p>
       </div>
-      <div style="margin-top:0.8rem;">
+      <div>
         ${playerHtml}
       </div>
-      <div class="card-actions">
-        <span></span>
-        <div>
-          <button class="icon-btn" onclick='editSong("${song.id}")' title="Modifica">✏️</button>
-          <button class="icon-btn" onclick='deleteSong("${song.id}")' title="Elimina">🗑️</button>
-        </div>
+      <div class="card-actions admin-only">
+        <button class="icon-btn" onclick='editSong("${song.id}")' title="Modifica">✏️ Modifica</button>
+        <button class="icon-btn" onclick='deleteSong("${song.id}")' title="Elimina">🗑️ Elimina</button>
       </div>
     `;
 
