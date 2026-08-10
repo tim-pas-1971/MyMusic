@@ -19,8 +19,29 @@ document.addEventListener("DOMContentLoaded", () => {
   openModalBtn.addEventListener("click", () => openModal());
   closeModalBtn.addEventListener("click", () => closeModal());
   window.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+let songsList = JSON.parse(localStorage.getItem("myMusic_songs")) || [];
+let currentSelectedGenre = "all";
 
-  searchInput.addEventListener("input", renderSongs);
+// Elementi DOM
+const modal = document.getElementById("songModal");
+const openModalBtn = document.getElementById("openModalBtn");
+const closeModalBtn = document.getElementById("closeModalBtn");
+const addSongForm = document.getElementById("addSongForm");
+const modalTitle = document.getElementById("modalTitle");
+const navButtons = document.querySelectorAll(".nav-btn");
+const currentGenreTitle = document.getElementById("currentGenreTitle");
+const songsContainer = document.getElementById("songsContainer");
+const searchInput = document.getElementById("searchInput");
+
+// Event Listener Iniziali
+document.addEventListener("DOMContentLoaded", () => {
+  renderSongs();
+
+  if (openModalBtn) openModalBtn.addEventListener("click", () => openModal());
+  if (closeModalBtn) closeModalBtn.addEventListener("click", () => closeModal());
+  window.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+
+  if (searchInput) searchInput.addEventListener("input", renderSongs);
 
   // Gestione Pagine Generi
   navButtons.forEach(btn => {
@@ -35,9 +56,13 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Import / Export
-  document.getElementById("exportJsonBtn").addEventListener("click", exportJSON);
-  document.getElementById("importJsonInput").addEventListener("change", importJSON);
-  document.getElementById("exportExcelBtn").addEventListener("click", exportExcel);
+  const exportJsonBtn = document.getElementById("exportJsonBtn");
+  const importJsonInput = document.getElementById("importJsonInput");
+  const exportExcelBtn = document.getElementById("exportExcelBtn");
+
+  if (exportJsonBtn) exportJsonBtn.addEventListener("click", exportJSON);
+  if (importJsonInput) importJsonInput.addEventListener("change", importJSON);
+  if (exportExcelBtn) exportExcelBtn.addEventListener("click", exportExcel);
 });
 
 // Salva e aggiorna LocalStorage
@@ -115,8 +140,9 @@ function deleteSong(id) {
 
 // Mostra i brani
 function renderSongs() {
+  if (!songsContainer) return;
   songsContainer.innerHTML = "";
-  const searchTerm = searchInput.value.toLowerCase();
+  const searchTerm = searchInput ? searchInput.value.toLowerCase() : "";
 
   const filtered = songsList.filter(song => {
     const matchesGenre = currentSelectedGenre === "all" || song.genre === currentSelectedGenre;
@@ -203,7 +229,7 @@ function exportExcel() {
     return;
   }
 
-  let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // \uFEFF gestisce gli accenti in Excel
+  let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
   csvContent += "Artista;Titolo;Anno;Genere;Link YouTube;Link Foto\n";
 
   songsList.forEach(s => {
