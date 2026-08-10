@@ -104,11 +104,16 @@ function closeModal() {
 }
 
 // Convertitore universale Link Google Drive (Audio o Immagine)
-function convertDriveUrl(url) {
+function convertDriveUrl(url, isImage = false) {
   if (!url) return "";
   const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
   if (match && match[1]) {
-    return `https://docs.google.com/uc?export=view&id=${match[1]}`;
+    const id = match[1];
+    if (isImage) {
+      // Genera l'anteprima diretta per le immagini da Drive
+      return `https://drive.google.com/thumbnail?id=${id}&sz=w800`;
+    }
+    return `https://docs.google.com/uc?export=view&id=${id}`;
   }
   return url;
 }
