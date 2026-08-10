@@ -1,132 +1,119 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MyMusic</title>
+c - La mia Musica</title>
   <link rel="stylesheet" href="style.css">
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-  <header>
-    <div class="logo">
-      <h1>🎵 MyMusic</h1>
+  <!-- Navigation / Header -->
+  <header class="app-header">
+    <div class="logo-container">
+      <span class="logo-icon">🎵</span>
+      <h1 class="app-title">MyMusic</h1>
     </div>
-
-    <!-- Barra Azioni e Ricerca -->
     <div class="header-actions">
-      <input type="text" id="searchInput" placeholder="🔍 Cerca titolo o artista..." class="search-bar">
-      
-      <button id="openModalBtn" class="btn primary-btn">+ Aggiungi Brano</button>
-      
-      <button id="exportJsonBtn" class="btn secondary-btn" title="Esporta Backup JSON">📤 JSON</button>
-      
-      <label for="importJsonInput" class="btn secondary-btn" title="Importa File JSON">
-        📥 Importa
-        <input type="file" id="importJsonInput" accept=".json" style="display: none;">
-      </label>
-
-      <button id="exportExcelBtn" class="btn excel-btn" title="Esporta Foglio Excel">📊 Excel</button>
+      <button class="btn btn-primary" id="openModalBtn">+ Aggiungi Brano</button>
     </div>
   </header>
 
-  <!-- Contenitore Layout con Sidebar a sinistra -->
-  <div class="layout-container">
+  <!-- Sidebar & Main Content Layout -->
+  <div class="main-layout">
     
-    <!-- Sidebar Generi -->
-    <nav class="genre-nav">
-      <div class="sidebar-title">Generi Musicali</div>
-      <button class="nav-btn active" data-genre="all">Tutti i Generi</button>
-      <button class="nav-btn" data-genre="Arabian / Belly Dance">Arabian / Belly Dance</button>
-      <button class="nav-btn" data-genre="Blues">Blues</button>
-      <button class="nav-btn" data-genre="Classical Crossover">Classical Crossover</button>
-      <button class="nav-btn" data-genre="Country / Folk">Country / Folk</button>
-      <button class="nav-btn" data-genre="Dance / Disco">Dance / Disco</button>
-      <button class="nav-btn" data-genre="Gregoriana">Gregoriana</button>
-      <button class="nav-btn" data-genre="Jazz">Jazz</button>
-      <button class="nav-btn" data-genre="K-pop">K-pop</button>
-      <button class="nav-btn" data-genre="Latino">Latino</button>
-      <button class="nav-btn" data-genre="Metal / Punk">Metal / Punk</button>
-      <button class="nav-btn" data-genre="Musica Classica">Musica Classica</button>
-      <button class="nav-btn" data-genre="Musica Elettronica">Musica Elettronica</button>
-      <button class="nav-btn" data-genre="Pop">Pop</button>
-      <button class="nav-btn" data-genre="Rap / Hip Hop">Rap / Hip Hop</button>
-      <button class="nav-btn" data-genre="Rock">Rock</button>
-      <button class="nav-btn" data-genre="Soul / Funk">Soul / Funk</button>
-      <button class="nav-btn" data-genre="Altro">Altro</button>
+    <!-- Generi / Navigation Sidebar -->
+    <nav class="sidebar">
+      <h2 class="sidebar-title">Generi</h2>
+      <ul class="genre-list">
+        <li><button class="nav-btn active" data-genre="all">Tutti i Generi</button></li>
+        <li><button class="nav-btn" data-genre="Pop">Pop</button></li>
+        <li><button class="nav-btn" data-genre="Rock">Rock</button></li>
+        <li><button class="nav-btn" data-genre="Dance">Dance / House</button></li>
+        <li><button class="nav-btn" data-genre="Rap / Hip-Hop">Rap / Hip-Hop</button></li>
+        <li><button class="nav-btn" data-genre="Italiana">Musica Italiana</button></li>
+        <li><button class="nav-btn" data-genre="Classica">Classica</button></li>
+        <li><button class="nav-btn" data-genre="Altro">Altro</button></li>
+      </ul>
     </nav>
 
-    <!-- Area Principale -->
-    <main class="main-content">
-      <h2 id="currentGenreTitle">Tutti i Generi</h2>
+    <!-- Main Section -->
+    <main class="content-area">
+      
+      <!-- Top Bar: Search & Export/Import -->
+      <div class="top-controls">
+        <input type="text" id="searchInput" placeholder="Cerca per titolo o artista..." class="search-input">
+        
+        <div class="data-actions">
+          <button id="exportJsonBtn" class="btn btn-secondary">Esporta Backup</button>
+          <label for="importJsonInput" class="btn btn-secondary">Importa Backup</label>
+          <input type="file" id="importJsonInput" accept=".json" style="display:none;">
+          <button id="exportExcelBtn" class="btn btn-secondary">Esporta Excel</button>
+        </div>
+      </div>
 
-      <!-- Contenitore Schede Brani -->
-      <section id="songsContainer" class="songs-grid">
-        <!-- Schede generate da JavaScript -->
-      </section>
+      <h2 id="currentGenreTitle" class="section-title">Tutti i Generi</h2>
+
+      <!-- Songs Cards Grid -->
+      <div id="songsContainer" class="songs-grid">
+        <p style="color:#64748b;">Caricamento brani in corso...</p>
+      </div>
+
     </main>
 
   </div>
 
-  <!-- MODALE: Inserimento / Modifica Brano -->
+  <!-- Modal per Aggiungere / Modificare Brano -->
   <div id="songModal" class="modal">
     <div class="modal-content">
-      <span id="closeModalBtn" class="close-btn">&times;</span>
-      <h2 id="modalTitle">Aggiungi Nuovo Brano</h2>
+      <div class="modal-header">
+        <h2 id="modalTitle">Aggiungi Nuovo Brano</h2>
+        <span class="close-btn" id="closeModalBtn">&times;</span>
+      </div>
       
       <form id="addSongForm">
         <input type="hidden" id="songId">
 
         <div class="form-group">
           <label for="artist">Artista *</label>
-          <input type="text" id="artist" required placeholder="Nome cantante/gruppo">
+          <input type="text" id="artist" required placeholder="Es. Alex Baroni">
         </div>
 
         <div class="form-group">
-          <label for="artistPhotoUrl">Link Foto Artista (URL)</label>
-          <input type="url" id="artistPhotoUrl" placeholder="https://esempio.com/foto.jpg">
+          <label for="artistPhotoUrl">Link Foto Artista (Dropbox / Web)</label>
+          <input type="url" id="artistPhotoUrl" placeholder="https://www.dropbox.com/... o link immagine">
         </div>
 
         <div class="form-group">
-          <label for="title">Titolo *</label>
-          <input type="text" id="title" required placeholder="Titolo della canzone">
+          <label for="title">Titolo Canzone *</label>
+          <input type="text" id="title" required placeholder="Es. Cambiare">
         </div>
 
         <div class="form-group">
-          <label for="year">Anno</label>
-          <input type="number" id="year" placeholder="Es. 1985">
+          <label for="year">Anno di Uscita</label>
+          <input type="number" id="year" placeholder="Es. 1997">
         </div>
 
         <div class="form-group">
-          <label for="genre">Genere *</label>
+          <label for="genre">Genere Musicale *</label>
           <select id="genre" required>
-            <option value="" disabled selected>Seleziona un genere...</option>
-            <option value="Arabian / Belly Dance">Arabian / Belly Dance</option>
-            <option value="Blues">Blues</option>
-            <option value="Classical Crossover">Classical Crossover</option>
-            <option value="Country / Folk">Country / Folk</option>
-            <option value="Dance / Disco">Dance / Disco</option>
-            <option value="Gregoriana">Gregoriana</option>
-            <option value="Jazz">Jazz</option>
-            <option value="K-pop">K-pop</option>
-            <option value="Latino">Latino</option>
-            <option value="Metal / Punk">Metal / Punk</option>
-            <option value="Musica Classica">Musica Classica</option>
-            <option value="Musica Elettronica">Musica Elettronica</option>
             <option value="Pop">Pop</option>
-            <option value="Rap / Hip Hop">Rap / Hip Hop</option>
             <option value="Rock">Rock</option>
-            <option value="Soul / Funk">Soul / Funk</option>
+            <option value="Dance">Dance / House</option>
+            <option value="Rap / Hip-Hop">Rap / Hip-Hop</option>
+            <option value="Italiana">Musica Italiana</option>
+            <option value="Classica">Classica</option>
             <option value="Altro">Altro</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label for="youtubeUrl">Link YouTube *</label>
-          <input type="url" id="youtubeUrl" required placeholder="https://www.youtube.com/watch?v=...">
+          <label for="youtubeUrl">Link Audio / YouTube / Dropbox *</label>
+          <input type="url" id="youtubeUrl" required placeholder="https://www.dropbox.com/... oppure YouTube">
         </div>
 
-        <button type="submit" class="btn primary-btn submit-btn">Salva Brano</button>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">Salva Brano</button>
+        </div>
       </form>
     </div>
   </div>
