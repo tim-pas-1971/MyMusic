@@ -8,14 +8,16 @@ const firebaseConfig = {
   appId: "1:48796554059:web:7cf1c63eadcba83af60ece"
 };
 
-// Mappa dei Colori per i Badge e le Sezioni
+// Mappa dei Colori per i Badge e le Sezioni (Inclusi Colonne Sonore e Hindi Film Music)
 const genreColors = {
   "Arabian / Belly Dance": "#f59e0b",
   "Blues": "#3b82f6",
   "Classical Crossover": "#a855f7",
+  "Colonne Sonore": "#eab308",
   "Country / Folk": "#10b981",
   "Dance / Disco": "#ec4899",
   "Gregoriana": "#d97706",
+  "Hindi Film Music": "#f97316",
   "Jazz": "#eab308",
   "K-pop": "#f472b6",
   "Latino": "#ef4444",
@@ -57,6 +59,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target === document.getElementById("songModal")) closeModal(); 
   };
 
+  // Gestione visibilità dinamica campo Titolo Film nel Modal
+  const genreSelect = document.getElementById("genre");
+  if (genreSelect) {
+    genreSelect.onchange = () => toggleMovieTitleField(genreSelect.value);
+  }
+
   const searchInput = document.getElementById("searchInput");
   if (searchInput) searchInput.oninput = () => renderSongs();
 
@@ -90,14 +98,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const year = document.getElementById("year").value.trim();
       const genre = document.getElementById("genre").value;
       const youtubeUrl = document.getElementById("youtubeUrl").value.trim();
+      const movieTitle = (genre === "Colonne Sonore" || genre === "Hindi Film Music") 
+        ? document.getElementById("movieTitle").value.trim() 
+        : "";
 
-      // CONTROLLO DUPLICATI: verifica direttamente sul database se esiste un brano identico
+      // CONTROLLO DUPLICATI sul database
       try {
         const snapshot = await db.collection("songs").get();
         let isDuplicate = false;
 
         snapshot.forEach((doc) => {
-          if (id && doc.id === id) return; // Ignora se stiamo modificando la scheda stessa
+          if (id && doc.id === id) return;
           const data = doc.data();
           if (
             data.artist && data.artist.trim().toLowerCase() === artist.toLowerCase() &&
@@ -111,12 +122,10 @@ document.addEventListener("DOMContentLoaded", () => {
           const confirmSave = confirm(
             `⚠️ ATTENZIONE: Il brano "${title}" di "${artist}" è già presente nella libreria!\n\nVuoi salvarlo ugualmente?`
           );
-          if (!confirmSave) {
-            return; // Annulla il salvataggio
-          }
+          if (!confirmSave) return;
         }
 
-        const songData = { artist, photoUrl, title, year, genre, youtubeUrl };
+        const songData = { artist, photoUrl, title, year, genre, youtubeUrl, movieTitle };
 
         if (id) {
           await db.collection("songs").doc(id).update(songData);
@@ -140,6 +149,18 @@ document.addEventListener("DOMContentLoaded", () => {
   if(excelBtn) excelBtn.onclick = exportExcel;
 });
 
+function toggleMovieTitleField(selectedGenre) {
+  const movieGroup = document.getElementById("movieTitleGroup");
+  if (!movieGroup) return;
+
+  if (selectedGenre === "Colonne Sonore" || selectedGenre === "Hindi Film Music") {
+    movieGroup.style.display = "block";
+  } else {
+    movieGroup.style.display = "none";
+    document.getElementById("movieTitle").value = "";
+  }
+}
+
 function openModal(songToEdit = null) {
   const form = document.getElementById("addSongForm");
   form.reset();
@@ -152,10 +173,14 @@ function openModal(songToEdit = null) {
     document.getElementById("title").value = songToEdit.title;
     document.getElementById("year").value = songToEdit.year || "";
     document.getElementById("genre").value = songToEdit.genre;
+    document.getElementById("movieTitle").value = songToEdit.movieTitle || "";
     document.getElementById("youtubeUrl").value = songToEdit.youtubeUrl;
+    
+    toggleMovieTitleField(songToEdit.genre);
   } else {
     document.getElementById("modalTitle").innerText = "Aggiungi Nuovo Brano";
     document.getElementById("songId").value = "";
+    toggleMovieTitleField(document.getElementById("genre").value);
   }
 
   document.getElementById("songModal").style.display = "flex";
@@ -182,7 +207,9 @@ function renderSongs() {
 
   const filtered = songsList.filter(song => {
     const matchGenre = currentSelectedGenre === "all" || song.genre === currentSelectedGenre;
-    const matchSearch = song.title.toLowerCase().includes(searchVal) || song.artist.toLowerCase().includes(searchVal);
+    const matchSearch = song.title.toLowerCase().includes(searchVal) || 
+                        song.artist.toLowerCase().includes(searchVal) ||
+                        (song.movieTitle && song.movieTitle.toLowerCase().includes(searchVal));
     return matchGenre && matchSearch;
   });
 
@@ -215,6 +242,10 @@ function renderSongs() {
       playerHtml = `<a href="${song.youtubeUrl}" target="_blank" style="color:${badgeColor}; font-weight:bold; font-size:0.85rem; text-decoration:none; display:inline-block; margin-top:0.5rem;">▶ Ascolta su YouTube</a>`;
     }
 
+    const movieHtml = song.movieTitle 
+      ? `<p class="card-info" style="color:#eab308; font-weight:600;">🎬 <strong>Film:</strong> ${song.movieTitle}</p>` 
+      : "";
+
     card.innerHTML = `
       <div>
         <div class="artist-img-container">
@@ -223,6 +254,7 @@ function renderSongs() {
         </div>
         <h3 class="card-title">${song.title}</h3>
         <p class="card-info"><strong>Artista:</strong> ${song.artist}</p>
+        ${movieHtml}
         <p class="card-info"><strong>Anno:</strong> ${song.year || '-'}</p>
       </div>
       <div>
@@ -294,10 +326,10 @@ function exportExcel() {
   }
 
   let csv = "data:text/csv;charset=utf-8,\uFEFF";
-  csv += "Artista;Titolo;Anno;Genere;Link Audio/YouTube;Link Foto\n";
+  csv += "Artista;Titolo;Anno;Genere;Film;Link Audio/YouTube;Link Foto\n";
 
   songsList.forEach(s => {
-    csv += `"${s.artist}";"${s.title}";"${s.year || ''}";"${s.genre}";"${s.youtubeUrl}";"${s.photoUrl || ''}"\n`;
+    csv += `"${s.artist}";"${s.title}";"${s.year || ''}";"${s.genre}";"${s.movieTitle || ''}";"${s.youtubeUrl}";"${s.photoUrl || ''}"\n`;
   });
 
   const a = document.createElement("a");
