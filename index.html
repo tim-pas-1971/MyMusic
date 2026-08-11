@@ -21,13 +21,15 @@
       --card-border: #2a364f;
     }
 
-    /* Mappa Colori Specifici per Generi Musicali */
+    /* Mappa Colori Specifici per Generi Musicali (In ordine alfabetico) */
     [data-genre="Arabian / Belly Dance"] { --genre-color: #f59e0b; }
     [data-genre="Blues"] { --genre-color: #3b82f6; }
     [data-genre="Classical Crossover"] { --genre-color: #a855f7; }
+    [data-genre="Colonne Sonore"] { --genre-color: #eab308; }
     [data-genre="Country / Folk"] { --genre-color: #10b981; }
     [data-genre="Dance / Disco"] { --genre-color: #ec4899; }
-    [data-genre="Gregoriana / Celtica"] { --genre-color: #d97706; }
+    [data-genre="Gregoriana"] { --genre-color: #d97706; }
+    [data-genre="Hindi Film Music"] { --genre-color: #f97316; }
     [data-genre="Jazz"] { --genre-color: #eab308; }
     [data-genre="K-pop"] { --genre-color: #f472b6; }
     [data-genre="Latino"] { --genre-color: #ef4444; }
@@ -139,7 +141,6 @@
       gap: 0.75rem;
     }
 
-    /* Pallino Colorato per ciascun Genere */
     .nav-btn::before {
       content: "";
       display: inline-block;
@@ -250,7 +251,6 @@
       border-color: var(--primary);
     }
 
-    /* Titolo della Sezione Colorato Dinamicamente */
     .section-title {
       font-size: 1.7rem;
       font-weight: 800;
@@ -302,7 +302,6 @@
       object-fit: cover;
     }
 
-    /* Label Genere sulle Schede coordinato col colore */
     .genre-badge {
       position: absolute;
       top: 10px;
@@ -441,7 +440,6 @@
       justify-content: flex-end;
     }
 
-    /* Regola per Schermi Mobili */
     @media (max-width: 768px) {
       .app-header {
         padding: 0.8rem 1rem;
@@ -504,7 +502,7 @@
   <!-- Layout Principale -->
   <div class="main-layout">
     
-    <!-- Sidebar Generi -->
+    <!-- Sidebar Generi in ordine alfabetico -->
     <nav class="sidebar">
       <h2 class="sidebar-title">GENERI</h2>
       <ul class="genre-list">
@@ -512,9 +510,11 @@
         <li><button class="nav-btn" data-genre="Arabian / Belly Dance">Arabian / Belly Dance</button></li>
         <li><button class="nav-btn" data-genre="Blues">Blues</button></li>
         <li><button class="nav-btn" data-genre="Classical Crossover">Classical Crossover</button></li>
+        <li><button class="nav-btn" data-genre="Colonne Sonore">Colonne Sonore</button></li>
         <li><button class="nav-btn" data-genre="Country / Folk">Country / Folk</button></li>
         <li><button class="nav-btn" data-genre="Dance / Disco">Dance / Disco</button></li>
-        <li><button class="nav-btn" data-genre="Gregoriana / Celtica">Gregoriana / Celtica</button></li>
+        <li><button class="nav-btn" data-genre="Gregoriana">Gregoriana</button></li>
+        <li><button class="nav-btn" data-genre="Hindi Film Music">Hindi Film Music</button></li>
         <li><button class="nav-btn" data-genre="Jazz">Jazz</button></li>
         <li><button class="nav-btn" data-genre="K-pop">K-pop</button></li>
         <li><button class="nav-btn" data-genre="Latino">Latino</button></li>
@@ -533,7 +533,7 @@
       
       <!-- Controlli Superiori -->
       <div class="top-controls">
-        <input type="text" id="searchInput" placeholder="Cerca per titolo o artista..." class="search-input">
+        <input type="text" id="searchInput" placeholder="Cerca per titolo, artista o film..." class="search-input">
         
         <div class="data-actions admin-only">
           <button id="exportJsonBtn" class="btn btn-secondary">Esporta Backup</button>
@@ -567,7 +567,7 @@
 
         <div class="form-group">
           <label for="artist">Artista *</label>
-          <input type="text" id="artist" required placeholder="Es. Alex Baroni">
+          <input type="text" id="artist" required placeholder="Es. Ennio Morricone">
         </div>
 
         <div class="form-group">
@@ -577,12 +577,12 @@
 
         <div class="form-group">
           <label for="title">Titolo Canzone *</label>
-          <input type="text" id="title" required placeholder="Es. Cambiare">
+          <input type="text" id="title" required placeholder="Es. C'era una volta il West">
         </div>
 
         <div class="form-group">
           <label for="year">Anno di Uscita</label>
-          <input type="number" id="year" placeholder="Es. 1997">
+          <input type="number" id="year" placeholder="Es. 1968">
         </div>
 
         <div class="form-group">
@@ -591,9 +591,11 @@
             <option value="Arabian / Belly Dance">Arabian / Belly Dance</option>
             <option value="Blues">Blues</option>
             <option value="Classical Crossover">Classical Crossover</option>
+            <option value="Colonne Sonore">Colonne Sonore</option>
             <option value="Country / Folk">Country / Folk</option>
             <option value="Dance / Disco">Dance / Disco</option>
-            <option value="Gregoriana / Celtica">Gregoriana / Celtica</option>
+            <option value="Gregoriana">Gregoriana</option>
+            <option value="Hindi Film Music">Hindi Film Music</option>
             <option value="Jazz">Jazz</option>
             <option value="K-pop">K-pop</option>
             <option value="Latino">Latino</option>
@@ -605,6 +607,12 @@
             <option value="Rock">Rock</option>
             <option value="Soul / Funk">Soul / Funk</option>
           </select>
+        </div>
+
+        <!-- Campo Dinamico per il Titolo del Film -->
+        <div class="form-group" id="movieTitleGroup" style="display: none;">
+          <label for="movieTitle">Titolo del Film 🎬</label>
+          <input type="text" id="movieTitle" placeholder="Es. C'era una volta il West">
         </div>
 
         <div class="form-group">
