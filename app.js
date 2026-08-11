@@ -70,8 +70,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const genreTitleEl = document.getElementById("currentGenreTitle");
       if (genreTitleEl) {
         genreTitleEl.innerText = currentSelectedGenre === "all" ? "Tutti i Generi" : currentSelectedGenre;
-        
-        // Imposta il colore della barra del titolo in base al genere selezionato
         const color = genreColors[currentSelectedGenre] || "#ec4899";
         genreTitleEl.style.setProperty('--active-section-color', color);
       }
@@ -92,6 +90,25 @@ document.addEventListener("DOMContentLoaded", () => {
       const year = document.getElementById("year").value.trim();
       const genre = document.getElementById("genre").value;
       const youtubeUrl = document.getElementById("youtubeUrl").value.trim();
+
+      // CONTROLLO DUPLICATI: verifica se esiste già una canzone con stesso artista e stesso titolo
+      const isDuplicate = songsList.some(song => {
+        // Se stiamo modificando un brano esistente, ignoriamo il brano stesso
+        if (id && song.id === id) return false;
+
+        const sameArtist = song.artist.trim().toLowerCase() === artist.toLowerCase();
+        const sameTitle = song.title.trim().toLowerCase() === title.toLowerCase();
+        return sameArtist && sameTitle;
+      });
+
+      if (isDuplicate) {
+        const confirmSave = confirm(
+          `⚠️ ATTENZIONE: Il brano "${title}" di "${artist}" è già presente nella libreria!\n\nVuoi salvarlo ugualmente?`
+        );
+        if (!confirmSave) {
+          return; // Annulla il salvataggio se l'utente sceglie "Annulla"
+        }
+      }
 
       const songData = { artist, photoUrl, title, year, genre, youtubeUrl };
 
