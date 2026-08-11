@@ -148,11 +148,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if(excelBtn) excelBtn.onclick = exportExcel;
 });
 
-// Funzione per aggiornare il conteggio dei brani nella sidebar
 function updateGenreCounts() {
   const buttons = document.querySelectorAll(".nav-btn");
   
-  // Calcola quante canzoni ci sono per ogni genere
   const counts = {};
   songsList.forEach(song => {
     if (song.genre) {
@@ -227,12 +225,38 @@ function renderSongs() {
   container.innerHTML = "";
   const searchVal = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase() : "";
 
-  const filtered = songsList.filter(song => {
+  // 1. Filtraggio brani in base a genere e ricerca
+  let filtered = songsList.filter(song => {
     const matchGenre = currentSelectedGenre === "all" || song.genre === currentSelectedGenre;
     const matchSearch = song.title.toLowerCase().includes(searchVal) || 
                         song.artist.toLowerCase().includes(searchVal) ||
                         (song.movieTitle && song.movieTitle.toLowerCase().includes(searchVal));
     return matchGenre && matchSearch;
+  });
+
+  // 2. Ordinamento Personalizzato
+  filtered.sort((a, b) => {
+    const isCinema = currentSelectedGenre === "Colonne Sonore" || currentSelectedGenre === "Hindi Film Music";
+
+    if (isCinema) {
+      // Ordine: TITOLO FILM (A-Z), poi ARTISTA (A-Z)
+      const movieA = (a.movieTitle || "").toLowerCase();
+      const movieB = (b.movieTitle || "").toLowerCase();
+      if (movieA !== movieB) return movieA.localeCompare(movieB);
+
+      const artistA = (a.artist || "").toLowerCase();
+      const artistB = (b.artist || "").toLowerCase();
+      return artistA.localeCompare(artistB);
+    } else {
+      // Ordine: ARTISTA (A-Z), poi TITOLO CANZONE (A-Z)
+      const artistA = (a.artist || "").toLowerCase();
+      const artistB = (b.artist || "").toLowerCase();
+      if (artistA !== artistB) return artistA.localeCompare(artistB);
+
+      const titleA = (a.title || "").toLowerCase();
+      const titleB = (b.title || "").toLowerCase();
+      return titleA.localeCompare(titleB);
+    }
   });
 
   if (filtered.length === 0) {
