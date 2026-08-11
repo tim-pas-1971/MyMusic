@@ -8,7 +8,7 @@ const firebaseConfig = {
   appId: "1:48796554059:web:7cf1c63eadcba83af60ece"
 };
 
-// Mappa dei Colori per i Badge e le Sezioni (Inclusi Colonne Sonore e Hindi Film Music)
+// Mappa dei Colori per i Badge e le Sezioni
 const genreColors = {
   "Arabian / Belly Dance": "#f59e0b",
   "Blues": "#3b82f6",
@@ -44,6 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     snapshot.forEach((doc) => {
       songsList.push({ id: doc.id, ...doc.data() });
     });
+    updateGenreCounts();
     renderSongs();
   }, (error) => {
     console.error("Errore Firebase:", error);
@@ -59,7 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target === document.getElementById("songModal")) closeModal(); 
   };
 
-  // Gestione visibilità dinamica campo Titolo Film nel Modal
   const genreSelect = document.getElementById("genre");
   if (genreSelect) {
     genreSelect.onchange = () => toggleMovieTitleField(genreSelect.value);
@@ -102,7 +102,6 @@ document.addEventListener("DOMContentLoaded", () => {
         ? document.getElementById("movieTitle").value.trim() 
         : "";
 
-      // CONTROLLO DUPLICATI sul database
       try {
         const snapshot = await db.collection("songs").get();
         let isDuplicate = false;
@@ -148,6 +147,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const excelBtn = document.getElementById("exportExcelBtn");
   if(excelBtn) excelBtn.onclick = exportExcel;
 });
+
+// Funzione per aggiornare il conteggio dei brani nella sidebar
+function updateGenreCounts() {
+  const buttons = document.querySelectorAll(".nav-btn");
+  
+  // Calcola quante canzoni ci sono per ogni genere
+  const counts = {};
+  songsList.forEach(song => {
+    if (song.genre) {
+      counts[song.genre] = (counts[song.genre] || 0) + 1;
+    }
+  });
+
+  buttons.forEach(btn => {
+    const genre = btn.getAttribute("data-genre");
+    if (genre === "all") {
+      btn.textContent = `Tutti i Generi (${songsList.length})`;
+    } else {
+      const count = counts[genre] || 0;
+      btn.textContent = `${genre} (${count})`;
+    }
+  });
+}
 
 function toggleMovieTitleField(selectedGenre) {
   const movieGroup = document.getElementById("movieTitleGroup");
@@ -260,7 +282,7 @@ function renderSongs() {
       <div>
         ${playerHtml}
       </div>
-      <div class="card-actions admin-only">
+      <div class="card-actions">
         <button class="icon-btn" onclick='editSong("${song.id}")'>✏️ Modifica</button>
         <button class="icon-btn" onclick='deleteSong("${song.id}")'>🗑️ Elimina</button>
       </div>
