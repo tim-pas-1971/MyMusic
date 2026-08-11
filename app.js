@@ -91,28 +91,33 @@ document.addEventListener("DOMContentLoaded", () => {
       const genre = document.getElementById("genre").value;
       const youtubeUrl = document.getElementById("youtubeUrl").value.trim();
 
-      // CONTROLLO DUPLICATI: verifica se esiste già una canzone con stesso artista e stesso titolo
-      const isDuplicate = songsList.some(song => {
-        // Se stiamo modificando un brano esistente, ignoriamo il brano stesso
-        if (id && song.id === id) return false;
-
-        const sameArtist = song.artist.trim().toLowerCase() === artist.toLowerCase();
-        const sameTitle = song.title.trim().toLowerCase() === title.toLowerCase();
-        return sameArtist && sameTitle;
-      });
-
-      if (isDuplicate) {
-        const confirmSave = confirm(
-          `⚠️ ATTENZIONE: Il brano "${title}" di "${artist}" è già presente nella libreria!\n\nVuoi salvarlo ugualmente?`
-        );
-        if (!confirmSave) {
-          return; // Annulla il salvataggio se l'utente sceglie "Annulla"
-        }
-      }
-
-      const songData = { artist, photoUrl, title, year, genre, youtubeUrl };
-
+      // CONTROLLO DUPLICATI: verifica direttamente sul database se esiste un brano identico
       try {
+        const snapshot = await db.collection("songs").get();
+        let isDuplicate = false;
+
+        snapshot.forEach((doc) => {
+          if (id && doc.id === id) return; // Ignora se stiamo modificando la scheda stessa
+          const data = doc.data();
+          if (
+            data.artist && data.artist.trim().toLowerCase() === artist.toLowerCase() &&
+            data.title && data.title.trim().toLowerCase() === title.toLowerCase()
+          ) {
+            isDuplicate = true;
+          }
+        });
+
+        if (isDuplicate) {
+          const confirmSave = confirm(
+            `⚠️ ATTENZIONE: Il brano "${title}" di "${artist}" è già presente nella libreria!\n\nVuoi salvarlo ugualmente?`
+          );
+          if (!confirmSave) {
+            return; // Annulla il salvataggio
+          }
+        }
+
+        const songData = { artist, photoUrl, title, year, genre, youtubeUrl };
+
         if (id) {
           await db.collection("songs").doc(id).update(songData);
         } else {
@@ -120,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         closeModal();
       } catch (err) {
-        alert("Errore salvataggio: " + err.message);
+        alert("Errore durante l'operazione: " + err.message);
       }
     };
   }
