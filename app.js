@@ -38,7 +38,20 @@ let currentSelectedGenre = "all";
 let queueList = [];
 let currentQueueIndex = 0;
 
+// Verifica se l'app è aperta in modalità Sola Lettura
+const urlParams = new URLSearchParams(window.location.search);
+const isReadOnly = urlParams.get('mode') === 'read';
+
 document.addEventListener("DOMContentLoaded", () => {
+  // Applica restrizioni per la modalità Sola Lettura
+  if (isReadOnly) {
+    const addBtn = document.getElementById("openModalBtn");
+    if (addBtn) addBtn.style.display = "none";
+
+    const dataActions = document.querySelector(".data-actions");
+    if (dataActions) dataActions.style.display = "none";
+  }
+
   db.collection("songs").onSnapshot((snapshot) => {
     songsList = [];
     snapshot.forEach((doc) => {
@@ -103,6 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if(form) {
     form.onsubmit = async (e) => {
       e.preventDefault();
+      if (isReadOnly) return;
 
       const id = document.getElementById("songId").value;
       const artist = document.getElementById("artist").value.trim();
@@ -220,6 +234,7 @@ function toggleMovieTitleField(selectedGenre) {
 }
 
 function openModal(songToEdit = null) {
+  if (isReadOnly) return;
   const form = document.getElementById("addSongForm");
   form.reset();
 
@@ -415,6 +430,14 @@ function renderSongs() {
       ? `<p class="card-info" style="color:#eab308; font-weight:600;">🎬 <strong>Film:</strong> ${song.movieTitle}</p>` 
       : "";
 
+    // Se siamo in modalità Sola Lettura, nascondiamo i pulsanti Modifica / Elimina
+    const actionsHtml = isReadOnly ? "" : `
+      <div class="card-actions">
+        <button class="icon-btn" onclick='editSong("${song.id}")'>✏️ Modifica</button>
+        <button class="icon-btn" onclick='deleteSong("${song.id}")'>🗑️ Elimina</button>
+      </div>
+    `;
+
     card.innerHTML = `
       <div>
         <div class="artist-img-container">
@@ -429,10 +452,7 @@ function renderSongs() {
       <div>
         ${playerHtml}
       </div>
-      <div class="card-actions">
-        <button class="icon-btn" onclick='editSong("${song.id}")'>✏️ Modifica</button>
-        <button class="icon-btn" onclick='deleteSong("${song.id}")'>🗑️ Elimina</button>
-      </div>
+      ${actionsHtml}
     `;
 
     container.appendChild(card);
@@ -440,11 +460,13 @@ function renderSongs() {
 }
 
 window.editSong = function(id) {
+  if (isReadOnly) return;
   const song = songsList.find(s => s.id === id);
   if (song) openModal(song);
 };
 
 window.deleteSong = async function(id) {
+  if (isReadOnly) return;
   if (confirm("Vuoi davvero eliminare questo brano?")) {
     try {
       await db.collection("songs").doc(id).delete();
@@ -455,6 +477,7 @@ window.deleteSong = async function(id) {
 };
 
 function exportJSON() {
+  if (isReadOnly) return;
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(songsList, null, 2));
   const a = document.createElement('a');
   a.setAttribute("href", dataStr);
@@ -465,6 +488,7 @@ function exportJSON() {
 }
 
 function importJSON(event) {
+  if (isReadOnly) return;
   const file = event.target.files[0];
   if (!file) return;
 
@@ -489,6 +513,7 @@ function importJSON(event) {
 }
 
 function exportExcel() {
+  if (isReadOnly) return;
   if (songsList.length === 0) {
     alert("Nessun brano da esportare.");
     return;
