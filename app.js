@@ -425,7 +425,20 @@ function renderSongs() {
     const isMp3 = rawAudio.toLowerCase().endsWith(".mp3") || rawAudio.toLowerCase().includes(".mp3?");
 
     let playerHtml = "";
-    if (isDropbox || isDrive || isMp3) {
+    if (isDrive) {
+      let fileId = "";
+      const match = rawAudio.match(/\/d\/([^\/\?]+)/) || rawAudio.match(/id=([^&]+)/);
+      if (match && match[1]) fileId = match[1];
+      
+      if (fileId) {
+        playerHtml = `
+          <div style="margin-top:0.5rem;">
+            <iframe src="https://drive.google.com/file/d/${fileId}/preview" width="100%" height="60" style="border:none; border-radius:8px;" allow="autoplay"></iframe>
+          </div>`;
+      } else {
+        playerHtml = `<a href="${rawAudio}" target="_blank" style="color:${badgeColor}; font-weight:bold; font-size:0.85rem; text-decoration:none;">▶ Ascolta su Drive</a>`;
+      }
+    } else if (isDropbox || isMp3) {
       playerHtml = `<div class="audio-player-wrapper"><audio controls preload="metadata"><source src="${processedAudioUrl}" type="audio/mpeg">Audio non supportato.</audio></div>`;
     } else if (rawAudio) {
       playerHtml = `<a href="${rawAudio}" target="_blank" style="color:${badgeColor}; font-weight:bold; font-size:0.85rem; text-decoration:none; display:inline-block; margin-top:0.5rem;">▶ Ascolta su YouTube</a>`;
