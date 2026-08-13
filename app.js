@@ -281,6 +281,32 @@ function fixDropboxUrl(url) {
     return cleanUrl.replace("dl=0", "raw=1").replace("dl=1", "raw=1");
   }
 
+  // Gestione link Google Drive (sia /view/ che uc?export=download)
+  if (cleanUrl.includes("drive.google.com")) {
+    let fileId = "";
+    const match = cleanUrl.match(/\/d\/([^\/\?]+)/) || cleanUrl.match(/id=([^&]+)/);
+    if (match && match[1]) {
+      fileId = match[1];
+      return `https://drive.google.com/uc?export=download&id=${fileId}`;
+    }
+  }
+
+  return cleanUrl;
+}
+
+  // Gestione link Google Drive (sia /view/ che uc?export=download)
+  if (cleanUrl.includes("drive.google.com")) {
+    let fileId = "";
+    const match = cleanUrl.match(/\/d\/([^\/\?]+)/) || cleanUrl.match(/id=([^&]+)/);
+    if (match && match[1]) {
+      fileId = match[1];
+      return `https://drive.google.com/uc?export=download&id=${fileId}`;
+    }
+  }
+
+  return cleanUrl;
+}
+
   // Gestione link Google Drive
   if (cleanUrl.includes("drive.google.com")) {
     let fileId = "";
