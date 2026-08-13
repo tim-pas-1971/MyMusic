@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MyMusic - La mia Musica</title>
   
+  <!-- Configurazione PWA per Icona su Cellulare con Nota Musicale Sfumata Arancione -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MyMusic">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='orangeGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23ff9f43'/><stop offset='100%' stop-color='%23ff5252'/></linearGradient></defs><rect width='100' height='100' rx='22' fill='%230f172a'/><path d='M35 65 A 10 10 0 1 1 25 55 A 10 10 0 0 1 35 65 V 25 L 75 15 V 55 A 10 10 0 1 1 65 45 A 10 10 0 0 1 75 55 V 15' fill='url(%23orangeGrad)'/></svg>">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='orangeGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23ff9f43'/><stop offset='100%' stop-color='%23ff5252'/></linearGradient></defs><rect width='100' height='100' rx='22' fill='%230f172a'/><path d='M35 65 A 10 10 0 1 1 25 55 A 10 10 0 0 1 35 65 V 25 L 75 15 V 55 A 10 10 0 1 1 65 45 A 10 10 0 0 1 75 55 V 15' fill='url(%23orangeGrad)'/></svg>">
+
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -21,7 +29,6 @@
       --card-border: #2a364f;
     }
 
-    /* Mappa Colori Specifici per Generi Musicali (In ordine alfabetico) */
     [data-genre="Arabian / Belly Dance"] { --genre-color: #f59e0b; }
     [data-genre="Blues"] { --genre-color: #3b82f6; }
     [data-genre="Classical Crossover"] { --genre-color: #a855f7; }
@@ -59,7 +66,7 @@
 
     /* Header */
     .app-header {
-      background-color: rgba(17, 24, 39, 0.9);
+      background-color: rgba(17, 24, 39, 0.95);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border-color);
       padding: 1rem 1.5rem;
@@ -79,16 +86,21 @@
 
     .logo-icon {
       font-size: 1.8rem;
-      filter: drop-shadow(0 0 8px rgba(236, 72, 153, 0.5));
+      filter: drop-shadow(0 0 8px rgba(249, 115, 22, 0.6));
     }
 
     .app-title {
       font-size: 1.5rem;
       font-weight: 800;
-      background: linear-gradient(135deg, #f472b6, #a855f7, #38bdf8);
+      background: linear-gradient(135deg, #ff9f43, #f97316, #ec4899);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       letter-spacing: -0.5px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
     }
 
     /* Layout */
@@ -109,7 +121,7 @@
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.12em;
-      color: #f472b6;
+      color: #f97316;
       margin-bottom: 1rem;
       padding-left: 0.75rem;
       font-weight: 800;
@@ -159,10 +171,6 @@
       transform: translateX(4px);
     }
 
-    .nav-btn:hover::before {
-      transform: scale(1.3);
-    }
-
     .nav-btn.active {
       background-color: var(--genre-color);
       color: #ffffff;
@@ -191,22 +199,45 @@
       flex-wrap: wrap;
     }
 
-    .search-input {
+    /* BARRA DI RICERCA MOLTO VISIBILE */
+    .search-container {
+      position: relative;
       flex: 1;
-      min-width: 250px;
-      padding: 0.85rem 1.25rem;
-      background-color: var(--bg-card);
-      border: 1px solid var(--card-border);
+      min-width: 280px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.95rem 1.25rem 0.95rem 3rem;
+      background: #1e293b;
+      border: 2px solid #a855f7;
       border-radius: 12px;
-      color: var(--text-main);
-      font-size: 0.95rem;
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 600;
       outline: none;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      transition: border-color 0.2s;
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.25);
+      transition: all 0.3s ease;
+    }
+
+    .search-input::placeholder {
+      color: #cbd5e1;
+      font-weight: 500;
     }
 
     .search-input:focus {
-      border-color: var(--primary);
+      border-color: #f97316;
+      background: #26334d;
+      box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.2rem;
+      pointer-events: none;
     }
 
     .data-actions {
@@ -227,16 +258,27 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 0.4rem;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #f472b6, #8b5cf6);
+      background: linear-gradient(135deg, #f97316, #ec4899);
       color: white;
-      box-shadow: 0 4px 14px rgba(236, 72, 153, 0.3);
+      box-shadow: 0 4px 14px rgba(249, 115, 22, 0.3);
     }
 
     .btn-primary:hover {
       opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    .btn-playlist {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-playlist:hover {
       transform: translateY(-1px);
     }
 
@@ -256,7 +298,7 @@
       font-weight: 800;
       margin-bottom: 1.5rem;
       color: #ffffff;
-      border-left: 6px solid var(--active-section-color, #ec4899);
+      border-left: 6px solid var(--active-section-color, #f97316);
       padding-left: 0.8rem;
       transition: border-color 0.3s ease;
     }
@@ -282,7 +324,7 @@
 
     .song-card:hover {
       transform: translateY(-4px);
-      border-color: rgba(244, 114, 182, 0.4);
+      border-color: rgba(249, 115, 22, 0.4);
       box-shadow: 0 12px 24px rgba(0,0,0,0.3);
     }
 
@@ -308,8 +350,8 @@
       right: 10px;
       background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(6px);
-      color: var(--badge-color, #f472b6);
-      border: 1px solid var(--badge-color, rgba(244, 114, 182, 0.4));
+      color: var(--badge-color, #f97316);
+      border: 1px solid var(--badge-color, rgba(249, 115, 22, 0.4));
       font-size: 0.72rem;
       font-weight: 800;
       padding: 0.3rem 0.7rem;
@@ -365,12 +407,12 @@
     }
 
     .icon-btn:hover {
-      background: rgba(244, 114, 182, 0.2);
-      border-color: #f472b6;
+      background: rgba(249, 115, 22, 0.2);
+      border-color: #f97316;
       color: #ffffff;
     }
 
-    /* Modal */
+    /* Modal Generico */
     .modal {
       display: none;
       position: fixed;
@@ -391,8 +433,8 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 20px;
       width: 100%;
-      max-width: 500px;
-      padding: 2rem;
+      max-width: 650px;
+      padding: 1.75rem;
       max-height: 90vh;
       overflow-y: auto;
       box-shadow: 0 25px 50px rgba(0,0,0,0.6);
@@ -402,13 +444,66 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
     }
 
     .close-btn {
       font-size: 1.6rem;
       cursor: pointer;
       color: var(--text-muted);
+    }
+
+    /* Stili Elenco Playlist Modal */
+    .playlist-search-box {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: #0f172a;
+      border: 1px solid #f97316;
+      border-radius: 8px;
+      color: #fff;
+      margin-bottom: 1rem;
+      outline: none;
+    }
+
+    .playlist-table-container {
+      max-height: 350px;
+      overflow-y: auto;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+
+    .playlist-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    .playlist-table th, .playlist-table td {
+      padding: 0.75rem 0.9rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .playlist-table th {
+      background-color: #0f172a;
+      color: #f97316;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .playlist-table tr:hover {
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    .player-bar-container {
+      background: #0f172a;
+      border: 1px solid #10b981;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-top: 1rem;
+      display: none;
     }
 
     .form-group {
@@ -418,7 +513,7 @@
     .form-group label {
       display: block;
       font-size: 0.88rem;
-      color: #f472b6;
+      color: #f97316;
       font-weight: 700;
       margin-bottom: 0.4rem;
     }
@@ -435,9 +530,10 @@
     }
 
     .modal-actions {
-      margin-top: 1.5rem;
+      margin-top: 1.25rem;
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
+      align-items: center;
     }
 
     @media (max-width: 768px) {
@@ -480,9 +576,6 @@
       .card-title {
         font-size: 1.05rem;
       }
-      .admin-only {
-        display: none !important;
-      }
     }
   </style>
 </head>
@@ -495,14 +588,15 @@
       <h1 class="app-title">MyMusic</h1>
     </div>
     <div class="header-actions">
-      <button class="btn btn-primary admin-only" id="openModalBtn">+ Aggiungi Brano</button>
+      <button class="btn btn-playlist" id="openPlaylistModalBtn">📋 Playlist / Sequenza</button>
+      <button class="btn btn-primary" id="openModalBtn">+ Aggiungi Brano</button>
     </div>
   </header>
 
   <!-- Layout Principale -->
   <div class="main-layout">
     
-    <!-- Sidebar Generi in ordine alfabetico -->
+    <!-- Sidebar Generi -->
     <nav class="sidebar">
       <h2 class="sidebar-title">GENERI</h2>
       <ul class="genre-list">
@@ -533,9 +627,12 @@
       
       <!-- Controlli Superiori -->
       <div class="top-controls">
-        <input type="text" id="searchInput" placeholder="Cerca per titolo, artista o film..." class="search-input">
+        <div class="search-container">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Cerca per titolo, artista o film..." class="search-input">
+        </div>
         
-        <div class="data-actions admin-only">
+        <div class="data-actions">
           <button id="exportJsonBtn" class="btn btn-secondary">Esporta Backup</button>
           <label for="importJsonInput" class="btn btn-secondary">Importa Backup</label>
           <input type="file" id="importJsonInput" accept=".json" style="display:none;">
@@ -554,7 +651,7 @@
 
   </div>
 
-  <!-- Modal per Aggiungere / Modificare Brano -->
+  <!-- Modal Aggiungi / Modifica Brano -->
   <div id="songModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -609,7 +706,6 @@
           </select>
         </div>
 
-        <!-- Campo Dinamico per il Titolo del Film -->
         <div class="form-group" id="movieTitleGroup" style="display: none;">
           <label for="movieTitle">Titolo del Film 🎬</label>
           <input type="text" id="movieTitle" placeholder="Es. C'era una volta il West">
@@ -621,9 +717,49 @@
         </div>
 
         <div class="modal-actions">
+          <span></span>
           <button type="submit" class="btn btn-primary">Salva Brano</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal Playlist / Selezione Sequenza Brani -->
+  <div id="playlistModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 style="color: #10b981;">📋 Seleziona Sequenza Brani</h2>
+        <span class="close-btn" id="closePlaylistModalBtn">&times;</span>
+      </div>
+
+      <input type="text" id="playlistSearchInput" placeholder="Filtra elenco per titolo, artista o genere..." class="playlist-search-box">
+
+      <div class="playlist-table-container">
+        <table class="playlist-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;"><input type="checkbox" id="selectAllCheckbox"></th>
+              <th>Titolo / Film</th>
+              <th>Artista</th>
+              <th>Genere</th>
+            </tr>
+          </thead>
+          <tbody id="playlistTableBody">
+            <!-- Popolato via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Player Continuo Sequenziale -->
+      <div id="playerBarContainer" class="player-bar-container">
+        <p id="nowPlayingText" style="color: #10b981; font-weight: 700; margin-bottom: 0.5rem; font-size: 0.95rem;">In riproduzione: -</p>
+        <audio id="continuousAudioPlayer" controls style="width: 100%;"></audio>
+      </div>
+
+      <div class="modal-actions">
+        <button id="clearSelectionBtn" class="btn btn-secondary">Deseleziona Tutti</button>
+        <button id="startQueueBtn" class="btn btn-playlist">▶️ Avvia Sequenza</button>
+      </div>
     </div>
   </div>
 
