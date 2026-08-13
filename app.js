@@ -429,15 +429,16 @@ function renderSongs() {
       let fileId = "";
       const match = rawAudio.match(/\/d\/([^\/\?]+)/) || rawAudio.match(/id=([^&]+)/);
       if (match && match[1]) fileId = match[1];
-      
-      if (fileId) {
-        playerHtml = `
-          <div style="margin-top:0.5rem;">
-            <iframe src="https://drive.google.com/file/d/${fileId}/preview" width="100%" height="60" style="border:none; border-radius:8px;" allow="autoplay"></iframe>
-          </div>`;
-      } else {
-        playerHtml = `<a href="${rawAudio}" target="_blank" style="color:${badgeColor}; font-weight:bold; font-size:0.85rem; text-decoration:none;">▶ Ascolta su Drive</a>`;
-      }
+
+      playerHtml = `
+        <div style="margin-top:0.6rem;">
+          <a href="https://drive.google.com/file/d/${fileId}/preview" target="_blank" 
+             style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 30px; color: #ffffff; font-weight: 600; font-size: 0.85rem; text-decoration: none; transition: all 0.2s ease;"
+             onmouseover="this.style.background='rgba(255, 255, 255, 0.15)'" 
+             onmouseout="this.style.background='rgba(255, 255, 255, 0.07)'">
+            <span style="color:${badgeColor}; font-size:1.1rem;">▶</span> Ascolta su Drive
+          </a>
+        </div>`;
     } else if (isDropbox || isMp3) {
       playerHtml = `<div class="audio-player-wrapper"><audio controls preload="metadata"><source src="${processedAudioUrl}" type="audio/mpeg">Audio non supportato.</audio></div>`;
     } else if (rawAudio) {
