@@ -43,7 +43,6 @@ const urlParams = new URLSearchParams(window.location.search);
 const isReadOnly = urlParams.get('mode') === 'read';
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Applica restrizioni per la modalità Sola Lettura
   if (isReadOnly) {
     const addBtn = document.getElementById("openModalBtn");
     if (addBtn) addBtn.style.display = "none";
@@ -63,14 +62,12 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error("Errore Firebase:", error);
   });
 
-  // Modal Aggiungi Brano
   const openBtn = document.getElementById("openModalBtn");
   if(openBtn) openBtn.onclick = () => openModal();
 
   const closeBtn = document.getElementById("closeModalBtn");
   if(closeBtn) closeBtn.onclick = () => closeModal();
 
-  // Modal Playlist / Sequenza
   const openPlaylistBtn = document.getElementById("openPlaylistModalBtn");
   if(openPlaylistBtn) openPlaylistBtn.onclick = () => openPlaylistModal();
 
@@ -111,7 +108,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   });
 
-  // Gestione Form Aggiunta
   const form = document.getElementById("addSongForm");
   if(form) {
     form.onsubmit = async (e) => {
@@ -165,7 +161,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  // Gestione Playlist e Player Sequenziale
   const selectAll = document.getElementById("selectAllCheckbox");
   if (selectAll) {
     selectAll.onchange = (e) => {
@@ -276,12 +271,10 @@ function fixDropboxUrl(url) {
   if (!url) return "";
   let cleanUrl = url.trim();
 
-  // Gestione link Dropbox
   if (cleanUrl.includes("dropbox.com")) {
     return cleanUrl.replace("dl=0", "raw=1").replace("dl=1", "raw=1");
   }
 
-  // Gestione link Google Drive
   if (cleanUrl.includes("drive.google.com")) {
     let fileId = "";
     const match = cleanUrl.match(/\/d\/([^\/\?]+)/) || cleanUrl.match(/id=([^&]+)/);
@@ -294,7 +287,6 @@ function fixDropboxUrl(url) {
   return cleanUrl;
 }
 
-// Render Tabella Elenco Playlist
 function renderPlaylistTable() {
   const tbody = document.getElementById("playlistTableBody");
   if (!tbody) return;
@@ -325,7 +317,6 @@ function renderPlaylistTable() {
   });
 }
 
-// Avvio Riproduzione Sequenziale
 function startContinuousQueue() {
   const checkboxes = document.querySelectorAll(".playlist-checkbox:checked");
   if (checkboxes.length === 0) {
@@ -444,7 +435,6 @@ function renderSongs() {
       ? `<p class="card-info" style="color:#eab308; font-weight:600;">🎬 <strong>Film:</strong> ${song.movieTitle}</p>` 
       : "";
 
-    // Se siamo in modalità Sola Lettura, nascondiamo i pulsanti Modifica / Elimina
     const actionsHtml = isReadOnly ? "" : `
       <div class="card-actions">
         <button class="icon-btn" onclick='editSong("${song.id}")'>✏️ Modifica</button>
