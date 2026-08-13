@@ -281,32 +281,6 @@ function fixDropboxUrl(url) {
     return cleanUrl.replace("dl=0", "raw=1").replace("dl=1", "raw=1");
   }
 
-  // Gestione link Google Drive (sia /view/ che uc?export=download)
-  if (cleanUrl.includes("drive.google.com")) {
-    let fileId = "";
-    const match = cleanUrl.match(/\/d\/([^\/\?]+)/) || cleanUrl.match(/id=([^&]+)/);
-    if (match && match[1]) {
-      fileId = match[1];
-      return `https://drive.google.com/uc?export=download&id=${fileId}`;
-    }
-  }
-
-  return cleanUrl;
-}
-
-  // Gestione link Google Drive (sia /view/ che uc?export=download)
-  if (cleanUrl.includes("drive.google.com")) {
-    let fileId = "";
-    const match = cleanUrl.match(/\/d\/([^\/\?]+)/) || cleanUrl.match(/id=([^&]+)/);
-    if (match && match[1]) {
-      fileId = match[1];
-      return `https://drive.google.com/uc?export=download&id=${fileId}`;
-    }
-  }
-
-  return cleanUrl;
-}
-
   // Gestione link Google Drive
   if (cleanUrl.includes("drive.google.com")) {
     let fileId = "";
@@ -454,10 +428,11 @@ function renderSongs() {
     const rawAudio = song.youtubeUrl || "";
     const processedAudioUrl = fixDropboxUrl(rawAudio);
     const isDropbox = rawAudio.includes("dropbox.com");
+    const isDrive = rawAudio.includes("drive.google.com");
     const isMp3 = rawAudio.toLowerCase().endsWith(".mp3") || rawAudio.toLowerCase().includes(".mp3?");
 
     let playerHtml = "";
-    if (isDropbox || isMp3) {
+    if (isDropbox || isDrive || isMp3) {
       playerHtml = `<div class="audio-player-wrapper"><audio controls preload="metadata"><source src="${processedAudioUrl}" type="audio/mpeg">Audio non supportato.</audio></div>`;
     } else if (rawAudio) {
       playerHtml = `<a href="${rawAudio}" target="_blank" style="color:${badgeColor}; font-weight:bold; font-size:0.85rem; text-decoration:none; display:inline-block; margin-top:0.5rem;">▶ Ascolta su YouTube</a>`;
