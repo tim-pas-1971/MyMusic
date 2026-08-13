@@ -8,7 +8,6 @@ const firebaseConfig = {
   appId: "1:48796554059:web:7cf1c63eadcba83af60ece"
 };
 
-// Mappa dei Colori per i Badge e le Sezioni
 const genreColors = {
   "Arabian / Belly Dance": "#f59e0b",
   "Blues": "#3b82f6",
@@ -31,12 +30,13 @@ const genreColors = {
   "all": "#ec4899"
 };
 
-// Inizializzazione Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 let songsList = [];
 let currentSelectedGenre = "all";
+let queueList = [];
+let currentQueueIndex = 0;
 
 document.addEventListener("DOMContentLoaded", () => {
   db.collection("songs").onSnapshot((snapshot) => {
@@ -50,14 +50,23 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error("Errore Firebase:", error);
   });
 
+  // Modal Aggiungi Brano
   const openBtn = document.getElementById("openModalBtn");
   if(openBtn) openBtn.onclick = () => openModal();
 
   const closeBtn = document.getElementById("closeModalBtn");
   if(closeBtn) closeBtn.onclick = () => closeModal();
+
+  // Modal Playlist / Sequenza
+  const openPlaylistBtn = document.getElementById("openPlaylistModalBtn");
+  if(openPlaylistBtn) openPlaylistBtn.onclick = () => openPlaylistModal();
+
+  const closePlaylistBtn = document.getElementById("closePlaylistModalBtn");
+  if(closePlaylistBtn) closePlaylistBtn.onclick = () => closePlaylistModal();
   
   window.onclick = (e) => { 
     if (e.target === document.getElementById("songModal")) closeModal(); 
+    if (e.target === document.getElementById("playlistModal")) closePlaylistModal(); 
   };
 
   const genreSelect = document.getElementById("genre");
@@ -67,6 +76,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const searchInput = document.getElementById("searchInput");
   if (searchInput) searchInput.oninput = () => renderSongs();
+
+  const playlistSearchInput = document.getElementById("playlistSearchInput");
+  if (playlistSearchInput) playlistSearchInput.oninput = () => renderPlaylistTable();
 
   document.querySelectorAll(".nav-btn").forEach(btn => {
     btn.onclick = () => {
@@ -86,6 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   });
 
+  // Gestione Form Aggiunta
   const form = document.getElementById("addSongForm");
   if(form) {
     form.onsubmit = async (e) => {
@@ -138,6 +151,32 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
+  // Gestione Playlist e Player Sequenziale
+  const selectAll = document.getElementById("selectAllCheckbox");
+  if (selectAll) {
+    selectAll.onchange = (e) => {
+      document.querySelectorAll(".playlist-checkbox").forEach(cb => cb.checked = e.target.checked);
+    };
+  }
+
+  const clearBtn = document.getElementById("clearSelectionBtn");
+  if (clearBtn) {
+    clearBtn.onclick = () => {
+      document.querySelectorAll(".playlist-checkbox").forEach(cb => cb.checked = false);
+      if (selectAll) selectAll.checked = false;
+    };
+  }
+
+  const startQueueBtn = document.getElementById("startQueueBtn");
+  if (startQueueBtn) {
+    startQueueBtn.onclick = startContinuousQueue;
+  }
+
+  const audioPlayer = document.getElementById("continuousAudioPlayer");
+  if (audioPlayer) {
+    audioPlayer.onended = playNextInQueue;
+  }
+
   const exportBtn = document.getElementById("exportJsonBtn");
   if(exportBtn) exportBtn.onclick = exportJSON;
 
@@ -150,7 +189,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function updateGenreCounts() {
   const buttons = document.querySelectorAll(".nav-btn");
-  
   const counts = {};
   songsList.forEach(song => {
     if (song.genre) {
@@ -188,13 +226,13 @@ function openModal(songToEdit = null) {
   if (songToEdit) {
     document.getElementById("modalTitle").innerText = "Modifica Brano";
     document.getElementById("songId").value = songToEdit.id;
-    document.getElementById("artist").value = songToEdit.artist;
+    document.getElementById("artist").value = songToEdit.artist || "";
     document.getElementById("artistPhotoUrl").value = songToEdit.photoUrl || "";
-    document.getElementById("title").value = songToEdit.title;
+    document.getElementById("title").value = songToEdit.title || "";
     document.getElementById("year").value = songToEdit.year || "";
-    document.getElementById("genre").value = songToEdit.genre;
+    document.getElementById("genre").value = songToEdit.genre || "Pop";
     document.getElementById("movieTitle").value = songToEdit.movieTitle || "";
-    document.getElementById("youtubeUrl").value = songToEdit.youtubeUrl;
+    document.getElementById("youtubeUrl").value = songToEdit.youtubeUrl || "";
     
     toggleMovieTitleField(songToEdit.genre);
   } else {
@@ -210,12 +248,97 @@ function closeModal() {
   document.getElementById("songModal").style.display = "none";
 }
 
+function openPlaylistModal() {
+  renderPlaylistTable();
+  document.getElementById("playlistModal").style.display = "flex";
+}
+
+function closePlaylistModal() {
+  document.getElementById("playlistModal").style.display = "none";
+}
+
 function fixDropboxUrl(url) {
   if (!url) return "";
-  if (url.includes("dropbox.com")) {
-    return url.replace("dl=0", "raw=1").replace("dl=1", "raw=1");
+  let cleanUrl = url.trim();
+  if (cleanUrl.includes("dropbox.com")) {
+    return cleanUrl.replace("dl=0", "raw=1").replace("dl=1", "raw=1");
   }
-  return url;
+  return cleanUrl;
+}
+
+// Render Tabella Elenco Playlist
+function renderPlaylistTable() {
+  const tbody = document.getElementById("playlistTableBody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  const filterVal = document.getElementById("playlistSearchInput") ? document.getElementById("playlistSearchInput").value.toLowerCase() : "";
+
+  const filtered = songsList.filter(s => {
+    return (s.title && s.title.toLowerCase().includes(filterVal)) ||
+           (s.artist && s.artist.toLowerCase().includes(filterVal)) ||
+           (s.genre && s.genre.toLowerCase().includes(filterVal)) ||
+           (s.movieTitle && s.movieTitle.toLowerCase().includes(filterVal));
+  });
+
+  filtered.sort((a, b) => (a.artist || "").localeCompare(b.artist || ""));
+
+  filtered.forEach(song => {
+    const tr = document.createElement("tr");
+    const displayTitle = song.movieTitle ? `🎬 ${song.movieTitle} - ${song.title}` : song.title;
+
+    tr.innerHTML = `
+      <td><input type="checkbox" class="playlist-checkbox" data-id="${song.id}"></td>
+      <td style="font-weight: 600; color: #fff;">${displayTitle}</td>
+      <td style="color: #cbd5e1;">${song.artist || '-'}</td>
+      <td><span style="color:${genreColors[song.genre] || '#f472b6'}; font-weight:700; font-size:0.8rem;">${song.genre}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Avvio Riproduzione Sequenziale
+function startContinuousQueue() {
+  const checkboxes = document.querySelectorAll(".playlist-checkbox:checked");
+  if (checkboxes.length === 0) {
+    alert("Seleziona almeno un brano dall'elenco per avviare la riproduzione!");
+    return;
+  }
+
+  queueList = [];
+  checkboxes.forEach(cb => {
+    const songId = cb.getAttribute("data-id");
+    const song = songsList.find(s => s.id === songId);
+    if (song) queueList.push(song);
+  });
+
+  currentQueueIndex = 0;
+  document.getElementById("playerBarContainer").style.display = "block";
+  playSongInQueue(currentQueueIndex);
+}
+
+function playSongInQueue(index) {
+  if (index >= queueList.length) {
+    document.getElementById("nowPlayingText").innerText = "🎉 Sequenza completata!";
+    return;
+  }
+
+  const song = queueList[index];
+  const audioPlayer = document.getElementById("continuousAudioPlayer");
+  const nowPlaying = document.getElementById("nowPlayingText");
+
+  nowPlaying.innerText = `▶️ In riproduzione (${index + 1}/${queueList.length}): ${song.artist} - ${song.title}`;
+
+  const audioUrl = fixDropboxUrl(song.youtubeUrl);
+  audioPlayer.src = audioUrl;
+  audioPlayer.play().catch(err => {
+    console.log("Errore riproduzione automatica:", err);
+  });
+}
+
+function playNextInQueue() {
+  currentQueueIndex++;
+  playSongInQueue(currentQueueIndex);
 }
 
 function renderSongs() {
@@ -225,21 +348,18 @@ function renderSongs() {
   container.innerHTML = "";
   const searchVal = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase() : "";
 
-  // 1. Filtraggio brani in base a genere e ricerca
   let filtered = songsList.filter(song => {
     const matchGenre = currentSelectedGenre === "all" || song.genre === currentSelectedGenre;
-    const matchSearch = song.title.toLowerCase().includes(searchVal) || 
-                        song.artist.toLowerCase().includes(searchVal) ||
+    const matchSearch = (song.title && song.title.toLowerCase().includes(searchVal)) || 
+                        (song.artist && song.artist.toLowerCase().includes(searchVal)) ||
                         (song.movieTitle && song.movieTitle.toLowerCase().includes(searchVal));
     return matchGenre && matchSearch;
   });
 
-  // 2. Ordinamento Personalizzato
   filtered.sort((a, b) => {
     const isCinema = currentSelectedGenre === "Colonne Sonore" || currentSelectedGenre === "Hindi Film Music";
 
     if (isCinema) {
-      // Ordine: TITOLO FILM (A-Z), poi ARTISTA (A-Z)
       const movieA = (a.movieTitle || "").toLowerCase();
       const movieB = (b.movieTitle || "").toLowerCase();
       if (movieA !== movieB) return movieA.localeCompare(movieB);
@@ -248,7 +368,6 @@ function renderSongs() {
       const artistB = (b.artist || "").toLowerCase();
       return artistA.localeCompare(artistB);
     } else {
-      // Ordine: ARTISTA (A-Z), poi TITOLO CANZONE (A-Z)
       const artistA = (a.artist || "").toLowerCase();
       const artistB = (b.artist || "").toLowerCase();
       if (artistA !== artistB) return artistA.localeCompare(artistB);
@@ -269,7 +388,8 @@ function renderSongs() {
     card.className = "song-card";
 
     const initial = song.artist ? song.artist.charAt(0).toUpperCase() : "?";
-    const processedPhotoUrl = fixDropboxUrl(song.photoUrl);
+    const rawPhoto = song.photoUrl || "";
+    const processedPhotoUrl = fixDropboxUrl(rawPhoto);
     const badgeColor = genreColors[song.genre] || "#f472b6";
 
     const imageHtml = processedPhotoUrl 
@@ -277,15 +397,18 @@ function renderSongs() {
          <div class="artist-img" style="display:none; align-items:center; justify-content:center; color:#ffffff; font-weight:900; font-size: 2.5rem; background: linear-gradient(135deg, #334155, #0f172a);">${initial}</div>`
       : `<div class="artist-img" style="display:flex; align-items:center; justify-content:center; color:#ffffff; font-weight:900; font-size: 2.5rem; background: linear-gradient(135deg, #334155, #0f172a);">${initial}</div>`;
 
-    const processedAudioUrl = fixDropboxUrl(song.youtubeUrl);
-    const isDropbox = song.youtubeUrl.includes("dropbox.com");
-    const isMp3 = song.youtubeUrl.toLowerCase().endsWith(".mp3");
+    const rawAudio = song.youtubeUrl || "";
+    const processedAudioUrl = fixDropboxUrl(rawAudio);
+    const isDropbox = rawAudio.includes("dropbox.com");
+    const isMp3 = rawAudio.toLowerCase().endsWith(".mp3") || rawAudio.toLowerCase().includes(".mp3?");
 
     let playerHtml = "";
     if (isDropbox || isMp3) {
-      playerHtml = `<div class="audio-player-wrapper"><audio controls><source src="${processedAudioUrl}" type="audio/mpeg">Audio non supportato.</audio></div>`;
+      playerHtml = `<div class="audio-player-wrapper"><audio controls preload="metadata"><source src="${processedAudioUrl}" type="audio/mpeg">Audio non supportato.</audio></div>`;
+    } else if (rawAudio) {
+      playerHtml = `<a href="${rawAudio}" target="_blank" style="color:${badgeColor}; font-weight:bold; font-size:0.85rem; text-decoration:none; display:inline-block; margin-top:0.5rem;">▶ Ascolta su YouTube</a>`;
     } else {
-      playerHtml = `<a href="${song.youtubeUrl}" target="_blank" style="color:${badgeColor}; font-weight:bold; font-size:0.85rem; text-decoration:none; display:inline-block; margin-top:0.5rem;">▶ Ascolta su YouTube</a>`;
+      playerHtml = `<p style="font-size:0.8rem; color:#94a3b8; margin-top:0.5rem;">Nessun link audio inserito</p>`;
     }
 
     const movieHtml = song.movieTitle 
@@ -296,10 +419,10 @@ function renderSongs() {
       <div>
         <div class="artist-img-container">
           ${imageHtml}
-          <span class="genre-badge" style="--badge-color: ${badgeColor};">${song.genre}</span>
+          <span class="genre-badge" style="--badge-color: ${badgeColor};">${song.genre || 'Altro'}</span>
         </div>
-        <h3 class="card-title">${song.title}</h3>
-        <p class="card-info"><strong>Artista:</strong> ${song.artist}</p>
+        <h3 class="card-title">${song.title || 'Senza Titolo'}</h3>
+        <p class="card-info"><strong>Artista:</strong> ${song.artist || 'Sconosciuto'}</p>
         ${movieHtml}
         <p class="card-info"><strong>Anno:</strong> ${song.year || '-'}</p>
       </div>
@@ -375,7 +498,7 @@ function exportExcel() {
   csv += "Artista;Titolo;Anno;Genere;Film;Link Audio/YouTube;Link Foto\n";
 
   songsList.forEach(s => {
-    csv += `"${s.artist}";"${s.title}";"${s.year || ''}";"${s.genre}";"${s.movieTitle || ''}";"${s.youtubeUrl}";"${s.photoUrl || ''}"\n`;
+    csv += `"${s.artist || ''}";"${s.title || ''}";"${s.year || ''}";"${s.genre || ''}";"${s.movieTitle || ''}";"${s.youtubeUrl || ''}";"${s.photoUrl || ''}"\n`;
   });
 
   const a = document.createElement("a");
