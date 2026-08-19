@@ -45,11 +45,21 @@ let currentQueueIndex = 0;
 const urlParams = new URLSearchParams(window.location.search);
 const isReadOnly = urlParams.get('mode') === 'read';
 
-// Mappatura di compatibilità per non perdere la visibilità delle canzoni già salvate
+// Mappatura di compatibilità ultra-flessibile
 function normalizeGenre(genre) {
   if (!genre) return "";
-  if (genre === "Dance / Disco") return "Dance / Disco / Elettronica";
-  if (genre === "Hindi Film Music") return "Hindi / Hindi Film Music";
+  const g = genre.trim().toLowerCase();
+
+  // Riconosce tutte le varianti di Dance / Disco / Elettronica
+  if (g.includes("dance") || g.includes("disco") || g.includes("elettronica") || g.includes("electronic")) {
+    return "Dance / Disco / Elettronica";
+  }
+
+  // Riconosce tutte le varianti di Hindi Film Music
+  if (g.includes("hindi")) {
+    return "Hindi / Hindi Film Music";
+  }
+
   return genre;
 }
 
@@ -374,6 +384,7 @@ function playNextInQueue() {
 }
 
 function renderSongs() {
+  console.log("GENERI PRESENTI NEI TUOI BRANI SU CLOUD:", songsList.map(s => s.genre));
   const container = document.getElementById("songsContainer");
   if (!container) return;
 
