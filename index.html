@@ -3,200 +3,766 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MyMusic</title>
-  <link rel="stylesheet" href="style.css">
+  <title>MyMusic - La mia Musica</title>
   
+  <!-- Configurazione PWA per Icona su Cellulare con Nota Musicale Sfumata Arancione -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MyMusic">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='orangeGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23ff9f43'/><stop offset='100%' stop-color='%23ff5252'/></linearGradient></defs><rect width='100' height='100' rx='22' fill='%230f172a'/><path d='M35 65 A 10 10 0 1 1 25 55 A 10 10 0 0 1 35 65 V 25 L 75 15 V 55 A 10 10 0 1 1 65 45 A 10 10 0 0 1 75 55 V 15' fill='url(%23orangeGrad)'/></svg>">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='orangeGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23ff9f43'/><stop offset='100%' stop-color='%23ff5252'/></linearGradient></defs><rect width='100' height='100' rx='22' fill='%230f172a'/><path d='M35 65 A 10 10 0 1 1 25 55 A 10 10 0 0 1 35 65 V 25 L 75 15 V 55 A 10 10 0 1 1 65 45 A 10 10 0 0 1 75 55 V 15' fill='url(%23orangeGrad)'/></svg>">
+
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    :root {
+      --primary: #8b5cf6;
+      --bg-dark: #0b0f19;
+      --bg-card: #151d30;
+      --bg-sidebar: #111827;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #1e293b;
+      --card-border: #2a364f;
+    }
+
+    [data-genre="Arabian / Belly Dance"] { --genre-color: #f59e0b; }
+    [data-genre="Blues"] { --genre-color: #3b82f6; }
+    [data-genre="Classical Crossover"] { --genre-color: #a855f7; }
+    [data-genre="Colonne Sonore"] { --genre-color: #eab308; }
+    [data-genre="Country / Folk"] { --genre-color: #10b981; }
+    [data-genre="Dance / Disco"] { --genre-color: #ec4899; }
+    [data-genre="Gregoriana"] { --genre-color: #d97706; }
+    [data-genre="Hindi Film Music"] { --genre-color: #f97316; }
+    [data-genre="Jazz"] { --genre-color: #eab308; }
+    [data-genre="K-pop"] { --genre-color: #f472b6; }
+    [data-genre="Latino"] { --genre-color: #ef4444; }
+    [data-genre="Metal / Punk"] { --genre-color: #dc2626; }
+    [data-genre="Musica Classica"] { --genre-color: #14b8a6; }
+    [data-genre="Musica Elettronica"] { --genre-color: #06b6d4; }
+    [data-genre="Pop"] { --genre-color: #ff6b81; }
+    [data-genre="Rap / Hip Hop"] { --genre-color: #f97316; }
+    [data-genre="Rock"] { --genre-color: #8b5cf6; }
+    [data-genre="Soul / Funk"] { --genre-color: #c084fc; }
+    [data-genre="all"] { --genre-color: #ec4899; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0b0f19 0%, #111827 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .app-header {
+      background-color: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      font-size: 1.8rem;
+      filter: drop-shadow(0 0 8px rgba(249, 115, 22, 0.6));
+    }
+
+    .app-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ff9f43, #f97316, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    /* Layout */
+    .main-layout {
+      display: flex;
+      flex: 1;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 270px;
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      padding: 1.5rem 1rem;
+    }
+
+    .sidebar-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #f97316;
+      margin-bottom: 1rem;
+      padding-left: 0.75rem;
+      font-weight: 800;
+    }
+
+    .genre-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
+    }
+
+    .nav-btn {
+      width: 100%;
+      text-align: left;
+      padding: 0.65rem 1rem;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .nav-btn::before {
+      content: "";
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: var(--genre-color, #94a3b8);
+      box-shadow: 0 0 6px var(--genre-color, transparent);
+      transition: transform 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.1);
+      transform: translateX(4px);
+    }
+
+    .nav-btn.active {
+      background-color: var(--genre-color);
+      color: #ffffff;
+      border-color: var(--genre-color);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    }
+
+    .nav-btn.active::before {
+      background-color: #ffffff;
+      box-shadow: none;
+    }
+
+    /* Content Area */
+    .content-area {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1200px;
+    }
+
+    .top-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    /* BARRA DI RICERCA MOLTO VISIBILE */
+    .search-container {
+      position: relative;
+      flex: 1;
+      min-width: 280px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.95rem 1.25rem 0.95rem 3rem;
+      background: #1e293b;
+      border: 2px solid #a855f7;
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 600;
+      outline: none;
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.25);
+      transition: all 0.3s ease;
+    }
+
+    .search-input::placeholder {
+      color: #cbd5e1;
+      font-weight: 500;
+    }
+
+    .search-input:focus {
+      border-color: #f97316;
+      background: #26334d;
+      box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.2rem;
+      pointer-events: none;
+    }
+
+    .data-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0.75rem 1.25rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #f97316, #ec4899);
+      color: white;
+      box-shadow: 0 4px 14px rgba(249, 115, 22, 0.3);
+    }
+
+    .btn-primary:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    .btn-playlist {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-playlist:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--card-border);
+    }
+
+    .btn-secondary:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+      border-color: var(--primary);
+    }
+
+    .section-title {
+      font-size: 1.7rem;
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      color: #ffffff;
+      border-left: 6px solid var(--active-section-color, #f97316);
+      padding-left: 0.8rem;
+      transition: border-color 0.3s ease;
+    }
+
+    /* Cards Grid */
+    .songs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .song-card {
+      background: linear-gradient(180deg, #1b253b 0%, #151d30 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .song-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(249, 115, 22, 0.4);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+    }
+
+    .artist-img-container {
+      position: relative;
+      width: 100%;
+      height: 170px;
+      margin-bottom: 1rem;
+      border-radius: 12px;
+      overflow: hidden;
+      background-color: #0f172a;
+    }
+
+    .artist-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .genre-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(6px);
+      color: var(--badge-color, #f97316);
+      border: 1px solid var(--badge-color, rgba(249, 115, 22, 0.4));
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 0.3rem 0.7rem;
+      border-radius: 20px;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 0.35rem;
+      color: #ffffff;
+    }
+
+    .card-info {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 0.2rem;
+    }
+
+    .audio-player-wrapper {
+      margin-top: 0.9rem;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 10px;
+      padding: 0.4rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    audio {
+      width: 100%;
+      height: 38px;
+    }
+
+    .card-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.45rem 0.75rem;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      background: rgba(249, 115, 22, 0.2);
+      border-color: #f97316;
+      color: #ffffff;
+    }
+
+    /* Modal Generico */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-content {
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 650px;
+      padding: 1.75rem;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .close-btn {
+      font-size: 1.6rem;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    /* Stili Elenco Playlist Modal */
+    .playlist-search-box {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: #0f172a;
+      border: 1px solid #f97316;
+      border-radius: 8px;
+      color: #fff;
+      margin-bottom: 1rem;
+      outline: none;
+    }
+
+    .playlist-table-container {
+      max-height: 350px;
+      overflow-y: auto;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+
+    .playlist-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    .playlist-table th, .playlist-table td {
+      padding: 0.75rem 0.9rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .playlist-table th {
+      background-color: #0f172a;
+      color: #f97316;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .playlist-table tr:hover {
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    .player-bar-container {
+      background: #0f172a;
+      border: 1px solid #10b981;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-top: 1rem;
+      display: none;
+    }
+
+    .form-group {
+      margin-bottom: 1.1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.88rem;
+      color: #f97316;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 0.8rem;
+      background-color: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .modal-actions {
+      margin-top: 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .app-header {
+        padding: 0.8rem 1rem;
+      }
+      .content-area {
+        padding: 1rem;
+      }
+      .main-layout {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem;
+      }
+      .genre-list {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+        max-height: none;
+      }
+      .nav-btn {
+        white-space: nowrap;
+        padding: 0.5rem 0.85rem;
+        font-size: 0.85rem;
+      }
+      .songs-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 1rem;
+      }
+      .artist-img-container {
+        height: 140px;
+      }
+      .song-card {
+        padding: 0.9rem;
+      }
+      .card-title {
+        font-size: 1.05rem;
+      }
+    }
+  </style>
 </head>
 <body>
 
+  <!-- Header dell'App -->
   <header class="app-header">
-    <h1 class="logo">🎵 MyMusic</h1>
+    <div class="logo-container">
+      <span class="logo-icon">🎵</span>
+      <h1 class="app-title">MyMusic</h1>
+    </div>
     <div class="header-actions">
-      <button id="openPlaylistModalBtn" class="btn btn-secondary">📋 Playlist / Sequenza</button>
-      <button id="openModalBtn" class="btn btn-primary">+ Aggiungi Brano</button>
+      <button class="btn btn-playlist" id="openPlaylistModalBtn">📋 Playlist / Sequenza</button>
+      <button class="btn btn-primary" id="openModalBtn">+ Aggiungi Brano</button>
     </div>
   </header>
 
+  <!-- Layout Principale -->
   <div class="main-layout">
+    
     <!-- Sidebar Generi -->
-    <aside class="sidebar">
-      <h3>GENERI</h3>
-      <nav class="genre-nav">
-        <button class="nav-btn active" data-genre="all">Tutti i Generi</button>
-        <button class="nav-btn" data-genre="Arabian / Belly Dance">Arabian / Belly Dance</button>
-        <button class="nav-btn" data-genre="Blues">Blues</button>
-        <button class="nav-btn" data-genre="Classical Crossover">Classical Crossover</button>
-        <button class="nav-btn" data-genre="Colonne Sonore">Colonne Sonore</button>
-        <button class="nav-btn" data-genre="Country / Folk">Country / Folk</button>
-        <button class="nav-btn" data-genre="Dance / Disco / Electronic">Dance / Disco / Electronic</button>
-        <button class="nav-btn" data-genre="DJ / MegaMix">DJ / MegaMix</button>
-        <button class="nav-btn" data-genre="Gregoriana">Gregoriana</button>
-        <button class="nav-btn" data-genre="Hindi / Hindi Film Music">Hindi / Hindi Film Music</button>
-        <button class="nav-btn" data-genre="House">House</button>
-        <button class="nav-btn" data-genre="Jazz">Jazz</button>
-        <button class="nav-btn" data-genre="K-pop">K-pop</button>
-        <button class="nav-btn" data-genre="Latino">Latino</button>
-        <button class="nav-btn" data-genre="Metal / Punk">Metal / Punk</button>
-        <button class="nav-btn" data-genre="Musica Classica">Musica Classica</button>
-        <button class="nav-btn" data-genre="Pop">Pop</button>
-        <button class="nav-btn" data-genre="Rap / Hip Hop">Rap / Hip Hop</button>
-        <button class="nav-btn" data-genre="Reggae">Reggae</button>
-        <button class="nav-btn" data-genre="Rock">Rock</button>
-        <button class="nav-btn" data-genre="Soul / Funk">Soul / Funk</button>
-      </nav>
-    </aside>
+    <nav class="sidebar">
+      <h2 class="sidebar-title">GENERI</h2>
+      <ul class="genre-list">
+        <li><button class="nav-btn active" data-genre="all">Tutti i Generi</button></li>
+        <li><button class="nav-btn" data-genre="Arabian / Belly Dance">Arabian / Belly Dance</button></li>
+        <li><button class="nav-btn" data-genre="Blues">Blues</button></li>
+        <li><button class="nav-btn" data-genre="Classical Crossover">Classical Crossover</button></li>
+        <li><button class="nav-btn" data-genre="Colonne Sonore">Colonne Sonore</button></li>
+        <li><button class="nav-btn" data-genre="Country / Folk">Country / Folk</button></li>
+        <li><button class="nav-btn" data-genre="Dance / Disco">Dance / Disco</button></li>
+        <li><button class="nav-btn" data-genre="Gregoriana">Gregoriana</button></li>
+        <li><button class="nav-btn" data-genre="Hindi Film Music">Hindi Film Music</button></li>
+        <li><button class="nav-btn" data-genre="Jazz">Jazz</button></li>
+        <li><button class="nav-btn" data-genre="K-pop">K-pop</button></li>
+        <li><button class="nav-btn" data-genre="Latino">Latino</button></li>
+        <li><button class="nav-btn" data-genre="Metal / Punk">Metal / Punk</button></li>
+        <li><button class="nav-btn" data-genre="Musica Classica">Musica Classica</button></li>
+        <li><button class="nav-btn" data-genre="Musica Elettronica">Musica Elettronica</button></li>
+        <li><button class="nav-btn" data-genre="Pop">Pop</button></li>
+        <li><button class="nav-btn" data-genre="Rap / Hip Hop">Rap / Hip Hop</button></li>
+        <li><button class="nav-btn" data-genre="Rock">Rock</button></li>
+        <li><button class="nav-btn" data-genre="Soul / Funk">Soul / Funk</button></li>
+      </ul>
+    </nav>
 
-    <!-- Area Principale Content -->
+    <!-- Area Contenuto Principale -->
     <main class="content-area">
-      <div class="top-bar">
-        <input type="text" id="searchInput" placeholder="🔍 Cerca per titolo, artista o film...">
+      
+      <!-- Controlli Superiori -->
+      <div class="top-controls">
+        <div class="search-container">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Cerca per titolo, artista o film..." class="search-input">
+        </div>
+        
         <div class="data-actions">
-          <button id="exportJsonBtn" class="btn-outline">Esporta Backup</button>
-          <label for="importJsonInput" class="btn-outline cursor-pointer">Importa Backup</label>
-          <input type="file" id="importJsonInput" accept=".json" style="display: none;">
-          <button id="exportExcelBtn" class="btn-outline">Esporta Excel</button>
+          <button id="exportJsonBtn" class="btn btn-secondary">Esporta Backup</button>
+          <label for="importJsonInput" class="btn btn-secondary">Importa Backup</label>
+          <input type="file" id="importJsonInput" accept=".json" style="display:none;">
+          <button id="exportExcelBtn" class="btn btn-secondary">Esporta Excel</button>
         </div>
       </div>
 
       <h2 id="currentGenreTitle" class="section-title">Tutti i Generi</h2>
 
-      <!-- Container per le schede dei brani -->
+      <!-- Griglia delle Canzoni -->
       <div id="songsContainer" class="songs-grid">
         <p style="color:#cbd5e1;">Caricamento brani in corso...</p>
       </div>
+
     </main>
+
   </div>
 
-  <!-- Barra Riproduzione Sequenziale (Playlist Player) -->
-  <div id="playerBarContainer" class="player-bar" style="display: none;">
-    <div class="player-info">
-      <span id="nowPlayingText">▶️ Nessun brano in riproduzione</span>
-    </div>
-    <audio id="continuousAudioPlayer" controls></audio>
-  </div>
-
-  <!-- Modal Aggiungi/Modifica Brano -->
+  <!-- Modal Aggiungi / Modifica Brano -->
   <div id="songModal" class="modal">
     <div class="modal-content">
-      <span id="closeModalBtn" class="close-btn">&times;</span>
-      <h2 id="modalTitle">Aggiungi Nuovo Brano</h2>
+      <div class="modal-header">
+        <h2 id="modalTitle" style="color: #ffffff;">Aggiungi Nuovo Brano</h2>
+        <span class="close-btn" id="closeModalBtn">&times;</span>
+      </div>
       
       <form id="addSongForm">
         <input type="hidden" id="songId">
 
         <div class="form-group">
           <label for="artist">Artista *</label>
-          <input type="text" id="artist" required placeholder="Es. Alex Baroni">
+          <input type="text" id="artist" required placeholder="Es. Ennio Morricone">
         </div>
 
         <div class="form-group">
-          <label for="title">Titolo Brano *</label>
-          <input type="text" id="title" required placeholder="Es. Cambiare">
+          <label for="artistPhotoUrl">Link Foto Artista (Dropbox / Web)</label>
+          <input type="url" id="artistPhotoUrl" placeholder="https://www.dropbox.com/... o link immagine">
         </div>
 
         <div class="form-group">
-          <label for="genre">Genere *</label>
+          <label for="title">Titolo Canzone *</label>
+          <input type="text" id="title" required placeholder="Es. C'era una volta il West">
+        </div>
+
+        <div class="form-group">
+          <label for="year">Anno di Uscita</label>
+          <input type="number" id="year" placeholder="Es. 1968">
+        </div>
+
+        <div class="form-group">
+          <label for="genre">Genere Musicale *</label>
           <select id="genre" required>
             <option value="Arabian / Belly Dance">Arabian / Belly Dance</option>
             <option value="Blues">Blues</option>
             <option value="Classical Crossover">Classical Crossover</option>
             <option value="Colonne Sonore">Colonne Sonore</option>
             <option value="Country / Folk">Country / Folk</option>
-            <option value="Dance / Disco / Electronic">Dance / Disco / Electronic</option>
-            <option value="DJ / MegaMix">DJ / MegaMix</option>
+            <option value="Dance / Disco">Dance / Disco</option>
             <option value="Gregoriana">Gregoriana</option>
-            <option value="Hindi / Hindi Film Music">Hindi / Hindi Film Music</option>
-            <option value="House">House</option>
+            <option value="Hindi Film Music">Hindi Film Music</option>
             <option value="Jazz">Jazz</option>
             <option value="K-pop">K-pop</option>
             <option value="Latino">Latino</option>
             <option value="Metal / Punk">Metal / Punk</option>
             <option value="Musica Classica">Musica Classica</option>
-            <option value="Pop" selected>Pop</option>
+            <option value="Musica Elettronica">Musica Elettronica</option>
+            <option value="Pop">Pop</option>
             <option value="Rap / Hip Hop">Rap / Hip Hop</option>
-            <option value="Reggae">Reggae</option>
             <option value="Rock">Rock</option>
             <option value="Soul / Funk">Soul / Funk</option>
           </select>
         </div>
 
         <div class="form-group" id="movieTitleGroup" style="display: none;">
-          <label for="movieTitle">Titolo Film / Colonna Sonora</label>
-          <input type="text" id="movieTitle" placeholder="Es. Il Gladiatore">
+          <label for="movieTitle">Titolo del Film 🎬</label>
+          <input type="text" id="movieTitle" placeholder="Es. C'era una volta il West">
         </div>
 
         <div class="form-group">
-          <label for="year">Anno</label>
-          <input type="text" id="year" placeholder="Es. 1997">
+          <label for="youtubeUrl">Link Audio / YouTube / Dropbox *</label>
+          <input type="url" id="youtubeUrl" required placeholder="https://www.dropbox.com/... oppure YouTube">
         </div>
 
-        <div class="form-group">
-          <label for="decade">Periodo Temporale (Decade):</label>
-          <select id="decade">
-            <option value="">-- Seleziona Decade --</option>
-            <option value="1960 - 1969">dal 1960 al 1969</option>
-            <option value="1970 - 1979">dal 1970 al 1979</option>
-            <option value="1980 - 1989">dal 1980 al 1989</option>
-            <option value="1990 - 1999">dal 1990 al 1999</option>
-            <option value="2000 - 2009">dal 2000 al 2009</option>
-            <option value="2010 - 2019">dal 2010 al 2019</option>
-            <option value="2020 - 2029">dal 2020 al 2029</option>
-            <option value="2030 - 2039">dal 2030 al 2039</option>
-          </select>
+        <div class="modal-actions">
+          <span></span>
+          <button type="submit" class="btn btn-primary">Salva Brano</button>
         </div>
-
-        <div class="form-group">
-          <label for="artistPhotoUrl">URL Immagine Artista</label>
-          <input type="url" id="artistPhotoUrl" placeholder="Link immagine o Google Drive/Dropbox">
-        </div>
-
-        <div class="form-group">
-          <label for="youtubeUrl">URL Audio (Google Drive / Dropbox / YouTube)</label>
-          <input type="url" id="youtubeUrl" placeholder="Link brano audio">
-        </div>
-
-        <button type="submit" class="btn btn-primary full-width">Salva Brano</button>
       </form>
     </div>
   </div>
 
-  <!-- Modal Playlist / Sequenza -->
+  <!-- Modal Playlist / Selezione Sequenza Brani -->
   <div id="playlistModal" class="modal">
-    <div class="modal-content modal-large">
-      <span id="closePlaylistModalBtn" class="close-btn">&times;</span>
-      <h2>Crea la tua Sequenza di Riproduzione</h2>
-      
-      <div class="playlist-controls">
-        <input type="text" id="playlistSearchInput" placeholder="🔍 Filtra brani per la playlist...">
-        <div class="playlist-btn-group">
-          <label><input type="checkbox" id="selectAllCheckbox"> Seleziona Tutti</label>
-          <button id="clearSelectionBtn" class="btn-outline-small">Deseleziona Tutti</button>
-          <button id="startQueueBtn" class="btn btn-primary">▶ Avvia Sequenza</button>
-        </div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 style="color: #10b981;">📋 Seleziona Sequenza Brani</h2>
+        <span class="close-btn" id="closePlaylistModalBtn">&times;</span>
       </div>
 
-      <div class="table-wrapper">
+      <input type="text" id="playlistSearchInput" placeholder="Filtra elenco per titolo, artista o genere..." class="playlist-search-box">
+
+      <div class="playlist-table-container">
         <table class="playlist-table">
           <thead>
             <tr>
-              <th>Sel.</th>
-              <th>Titolo Brano / Film</th>
+              <th style="width: 40px;"><input type="checkbox" id="selectAllCheckbox"></th>
+              <th>Titolo / Film</th>
               <th>Artista</th>
               <th>Genere</th>
             </tr>
           </thead>
           <tbody id="playlistTableBody">
-            <!-- I brani verranno inseriti qui da JS -->
+            <!-- Popolato via JS -->
           </tbody>
         </table>
+      </div>
+
+      <!-- Player Continuo Sequenziale -->
+      <div id="playerBarContainer" class="player-bar-container">
+        <p id="nowPlayingText" style="color: #10b981; font-weight: 700; margin-bottom: 0.5rem; font-size: 0.95rem;">In riproduzione: -</p>
+        <audio id="continuousAudioPlayer" controls style="width: 100%;"></audio>
+      </div>
+
+      <div class="modal-actions">
+        <button id="clearSelectionBtn" class="btn btn-secondary">Deseleziona Tutti</button>
+        <button id="startQueueBtn" class="btn btn-playlist">▶️ Avvia Sequenza</button>
       </div>
     </div>
   </div>
 
-  <!-- Script dell'applicazione -->
   <script src="app.js"></script>
 </body>
 </html>
