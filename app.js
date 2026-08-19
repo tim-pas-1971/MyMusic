@@ -45,6 +45,14 @@ let currentQueueIndex = 0;
 const urlParams = new URLSearchParams(window.location.search);
 const isReadOnly = urlParams.get('mode') === 'read';
 
+// Mappatura di compatibilità per non perdere la visibilità delle canzoni già salvate
+function normalizeGenre(genre) {
+  if (!genre) return "";
+  if (genre === "Dance / Disco" || genre === "Musica Elettronica") return "Dance / Disco / Electronic";
+  if (genre === "Hindi Film Music") return "Hindi / Hindi Film Music";
+  return genre;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   if (isReadOnly) {
     const addBtn = document.getElementById("openModalBtn");
@@ -373,7 +381,9 @@ function renderSongs() {
   const searchVal = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase() : "";
 
   let filtered = songsList.filter(song => {
-    const matchGenre = currentSelectedGenre === "all" || song.genre === currentSelectedGenre;
+  const normSongGenre = normalizeGenre(song.genre);
+  const normSelectedGenre = normalizeGenre(currentSelectedGenre);
+  const matchGenre = currentSelectedGenre === "all" || normSongGenre === normSelectedGenre || song.genre === currentSelectedGenre;
     const matchSearch = (song.title && song.title.toLowerCase().includes(searchVal)) || 
                         (song.artist && song.artist.toLowerCase().includes(searchVal)) ||
                         (song.movieTitle && song.movieTitle.toLowerCase().includes(searchVal));
