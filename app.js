@@ -66,6 +66,26 @@ function calculateDecade(year) {
   return "";
 }
 
+// Conversione specifica e pulita per le IMMAGINI da Drive e Dropbox
+function fixDriveImageUrl(url) {
+  if (!url) return "";
+  let cleanUrl = url.trim();
+
+  if (cleanUrl.includes("dropbox.com")) {
+    return cleanUrl.replace("dl=0", "raw=1").replace("dl=1", "raw=1");
+  }
+
+  if (cleanUrl.includes("drive.google.com")) {
+    let fileId = "";
+    const match = cleanUrl.match(/\/d\/([^\/\?]+)/) || cleanUrl.match(/id=([^&]+)/);
+    if (match && match[1]) {
+      fileId = match[1];
+      return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    }
+  }
+  return cleanUrl;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   if (isReadOnly) {
     const addBtn = document.getElementById("openModalBtn");
@@ -175,6 +195,40 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     };
   }
+
+  const selectAll = document.getElementById("selectAllCheckbox");
+  if (selectAll) {
+    selectAll.onchange = (e) => {
+      document.querySelectorAll(".playlist-checkbox").forEach(cb => cb.checked = e.target.checked);
+    };
+  }
+
+  const clearBtn = document.getElementById("clearSelectionBtn");
+  if (clearBtn) {
+    clearBtn.onclick = () => {
+      document.querySelectorAll(".playlist-checkbox").forEach(cb => cb.checked = false);
+      if (selectAll) selectAll.checked = false;
+    };
+  }
+
+  const startQueueBtn = document.getElementById("startQueueBtn");
+  if (startQueueBtn) {
+    startQueueBtn.onclick = startContinuousQueue;
+  }
+
+  const audioPlayer = document.getElementById("continuousAudioPlayer");
+  if (audioPlayer) {
+    audioPlayer.onended = playNextInQueue;
+  }
+
+  const exportBtn = document.getElementById("exportJsonBtn");
+  if(exportBtn) exportBtn.onclick = exportJSON;
+
+  const importInput = document.getElementById("importJsonInput");
+  if(importInput) importInput.onchange = importJSON;
+
+  const excelBtn = document.getElementById("exportExcelBtn");
+  if(excelBtn) excelBtn.onclick = exportExcel;
 });
 
 function updateGenreCounts() {
@@ -245,21 +299,90 @@ function closeModal() {
   document.getElementById("songModal").style.display = "none";
 }
 
-function fixDropboxUrl(url) {
-  if (!url) return "";
-  let cleanUrl = url.trim();
-  if (cleanUrl.includes("dropbox.com")) {
-    return cleanUrl.replace("dl=0", "raw=1").replace("dl=1", "raw=1");
+function openPlaylistModal() {
+  renderPlaylistTable();
+  document.getElementById("playlistModal").style.display = "flex";
+}
+
+function closePlaylistModal() {
+  document.getElementById("playlistModal").style.display = "none";
+}
+
+function renderPlaylistTable() {
+  const tbody = document.getElementById("playlistTableBody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  const filterVal = document.getElementById("playlistSearchInput") ? document.getElementById("playlistSearchInput").value.toLowerCase() : "";
+
+  const filtered = songsList.filter(s => {
+    return (s.title && s.title.toLowerCase().includes(filterVal)) ||
+           (s.artist && s.artist.toLowerCase().includes(filterVal)) ||
+           (s.genre && s.genre.toLowerCase().includes(filterVal)) ||
+           (s.movieTitle && s.movieTitle.toLowerCase().includes(filterVal));
+  });
+
+  filtered.sort((a, b) => (a.artist || "").localeCompare(b.artist || ""));
+
+  filtered.forEach(song => {
+    const tr = document.createElement("tr");
+    const displayTitle = song.movieTitle ? `🎬 ${song.movieTitle} - ${song.title}` : song.title;
+    const normG = normalizeGenre(song.genre);
+
+    tr.innerHTML = `
+      <td><input type="checkbox" class="playlist-checkbox" data-id="${song.id}"></td>
+      <td style="font-weight: 600; color: #fff;">${displayTitle}</td>
+      <td style="color: #cbd5e1;">${song.artist || '-'}</td>
+      <td><span style="color:${genreColors[normG] || '#f472b6'}; font-weight:700; font-size:0.8rem;">${normG}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function startContinuousQueue() {
+  const checkboxes = document.querySelectorAll(".playlist-checkbox:checked");
+  if (checkboxes.length === 0) {
+    alert("Seleziona almeno un brano dall'elenco per avviare la riproduzione!");
+    return;
   }
-  if (cleanUrl.includes("drive.google.com")) {
-    let fileId = "";
-    const match = cleanUrl.match(/\/d\/([^\/\?]+)/) || cleanUrl.match(/id=([^&]+)/);
-    if (match && match[1]) {
-      fileId = match[1];
-      return `https://drive.google.com/uc?export=download&id=${fileId}`;
-    }
+
+  queueList = [];
+  checkboxes.forEach(cb => {
+    const songId = cb.getAttribute("data-id");
+    const song = songsList.find(s => s.id === songId);
+    if (song) queueList.push(song);
+  });
+
+  currentQueueIndex = 0;
+  document.getElementById("playerBarContainer").style.display = "block";
+  playSongInQueue(currentQueueIndex);
+}
+
+function playSongInQueue(index) {
+  if (index >= queueList.length) {
+    document.getElementById("nowPlayingText").innerText = "🎉 Sequenza completata!";
+    return;
   }
-  return cleanUrl;
+
+  const song = queueList[index];
+  const audioPlayer = document.getElementById("continuousAudioPlayer");
+  const nowPlaying = document.getElementById("nowPlayingText");
+
+  nowPlaying.innerText = `▶️ In riproduzione (${index + 1}/${queueList.length}): ${song.artist} - ${song.title}`;
+
+  let audioUrl = song.youtubeUrl || "";
+  if (audioUrl.includes("dropbox.com")) {
+    audioUrl = audioUrl.replace("dl=0", "raw=1").replace("dl=1", "raw=1");
+  }
+  audioPlayer.src = audioUrl;
+  audioPlayer.play().catch(err => {
+    console.log("Errore riproduzione automatica:", err);
+  });
+}
+
+function playNextInQueue() {
+  currentQueueIndex++;
+  playSongInQueue(currentQueueIndex);
 }
 
 function renderSongs() {
@@ -304,7 +427,7 @@ function renderSongs() {
 
     const initial = song.artist ? song.artist.charAt(0).toUpperCase() : "?";
     const rawPhoto = song.photoUrl || "";
-    const processedPhotoUrl = fixDropboxUrl(rawPhoto);
+    const processedPhotoUrl = fixDriveImageUrl(rawPhoto);
     const displayGenre = normalizeGenre(song.genre);
     const badgeColor = genreColors[displayGenre] || "#f472b6";
 
@@ -314,7 +437,6 @@ function renderSongs() {
       : `<div class="artist-img" style="display:flex; align-items:center; justify-content:center; color:#ffffff; font-weight:900; font-size: 2.5rem; background: linear-gradient(135deg, #334155, #0f172a);">${initial}</div>`;
 
     const rawAudio = song.youtubeUrl || "";
-    const processedAudioUrl = fixDropboxUrl(rawAudio);
     const isDropbox = rawAudio.includes("dropbox.com");
     const isDrive = rawAudio.includes("drive.google.com");
     const isMp3 = rawAudio.toLowerCase().endsWith(".mp3") || rawAudio.toLowerCase().includes(".mp3?");
@@ -335,7 +457,8 @@ function renderSongs() {
           </a>
         </div>`;
     } else if (isDropbox || isMp3) {
-      playerHtml = `<div class="audio-player-wrapper"><audio controls preload="metadata"><source src="${processedAudioUrl}" type="audio/mpeg">Audio non supportato.</audio></div>`;
+      let audioSrc = rawAudio.replace("dl=0", "raw=1").replace("dl=1", "raw=1");
+      playerHtml = `<div class="audio-player-wrapper"><audio controls preload="metadata"><source src="${audioSrc}" type="audio/mpeg">Audio non supportato.</audio></div>`;
     } else if (rawAudio) {
       playerHtml = `<a href="${rawAudio}" target="_blank" style="color:${badgeColor}; font-weight:bold; font-size:0.85rem; text-decoration:none; display:inline-block; margin-top:0.5rem;">▶ Ascolta su YouTube</a>`;
     } else {
@@ -394,3 +517,62 @@ window.deleteSong = async function(id) {
     }
   }
 };
+
+function exportJSON() {
+  if (isReadOnly) return;
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(songsList, null, 2));
+  const a = document.createElement('a');
+  a.setAttribute("href", dataStr);
+  a.setAttribute("download", "MyMusic_Backup.json");
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function importJSON(event) {
+  if (isReadOnly) return;
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (Array.isArray(data)) {
+        for (const song of data) {
+          delete song.id;
+          await db.collection("songs").add(song);
+        }
+        alert("Importazione su Cloud completata!");
+      } else {
+        alert("File non valido.");
+      }
+    } catch (err) {
+      alert("Errore nell'importazione file.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+function exportExcel() {
+  if (isReadOnly) return;
+  if (songsList.length === 0) {
+    alert("Nessun brano da esportare.");
+    return;
+  }
+
+  let csv = "data:text/csv;charset=utf-8,\uFEFF";
+  csv += "Artista;Titolo;Anno;Decade;Genere;Film;Link Audio/YouTube;Link Foto\n";
+
+  songsList.forEach(s => {
+    const dec = s.decade || calculateDecade(s.year);
+    csv += `"${s.artist || ''}";"${s.title || ''}";"${s.year || ''}";"${dec || ''}";"${s.genre || ''}";"${s.movieTitle || ''}";"${s.youtubeUrl || ''}";"${s.photoUrl || ''}"\n`;
+  });
+
+  const a = document.createElement("a");
+  a.setAttribute("href", encodeURI(csv));
+  a.setAttribute("download", "MyMusic_Canzoni.csv");
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
