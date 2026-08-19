@@ -125,6 +125,59 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target === document.getElementById("playlistModal")) closePlaylistModal(); 
   };
 
+  const filterGenre = document.getElementById("filterGenre");
+  const filterDecade = document.getElementById("filterDecade");
+  const filterArtist = document.getElementById("filterArtist");
+  const resetBtn = document.getElementById("resetFiltersBtn");
+
+  if (filterGenre) {
+    filterGenre.onchange = () => {
+      currentSelectedGenre = filterGenre.value;
+      document.querySelectorAll(".nav-btn").forEach(b => {
+        b.classList.toggle("active", b.getAttribute("data-genre") === currentSelectedGenre);
+      });
+      renderSongs();
+    };
+  }
+
+  if (filterDecade) filterDecade.onchange = () => renderSongs();
+  if (filterArtist) filterArtist.oninput = () => renderSongs();
+
+  if (resetBtn) {
+    resetBtn.onclick = () => {
+      if (document.getElementById("searchInput")) document.getElementById("searchInput").value = "";
+      if (filterGenre) filterGenre.value = "all";
+      if (filterDecade) filterDecade.value = "all";
+      if (filterArtist) filterArtist.value = "";
+      currentSelectedGenre = "all";
+
+      document.querySelectorAll(".nav-btn").forEach(b => {
+        b.classList.toggle("active", b.getAttribute("data-genre") === "all");
+      });
+
+      renderSongs();
+    };
+  }
+
+  // Gestione Filtri Modale Sequenza Brani
+  const plSearch = document.getElementById("playlistSearchInput");
+  const plGenre = document.getElementById("playlistFilterGenre");
+  const plDecade = document.getElementById("playlistFilterDecade");
+  const plReset = document.getElementById("resetPlaylistFiltersBtn");
+
+  if (plSearch) plSearch.oninput = () => renderPlaylistTable();
+  if (plGenre) plGenre.onchange = () => renderPlaylistTable();
+  if (plDecade) plDecade.onchange = () => renderPlaylistTable();
+
+  if (plReset) {
+    plReset.onclick = () => {
+      if (plSearch) plSearch.value = "";
+      if (plGenre) plGenre.value = "all";
+      if (plDecade) plDecade.value = "all";
+      renderPlaylistTable();
+    };
+  }
+
   const genreSelect = document.getElementById("genre");
   if (genreSelect) {
     genreSelect.onchange = () => toggleMovieTitleField(genreSelect.value);
@@ -368,31 +421,52 @@ function fixDropboxUrl(url) {
 function renderPlaylistTable() {
   const tbody = document.getElementById("playlistTableBody");
   if (!tbody) return;
-  tbody.innerHTML = "";
 
-  const filterVal = document.getElementById("playlistSearchInput") ? document.getElementById("playlistSearchInput").value.toLowerCase() : "";
+  const searchVal = document.getElementById("playlistSearchInput") ? document.getElementById("playlistSearchInput").value.toLowerCase() : "";
+  const selectedGenre = document.getElementById("playlistFilterGenre") ? document.getElementById("playlistFilterGenre").value : "all";
+  const selectedDecade = document.getElementById("playlistFilterDecade") ? document.getElementById("playlistFilterDecade").value : "all";
 
-  const filtered = songsList.filter(s => {
-    return (s.title && s.title.toLowerCase().includes(filterVal)) ||
-           (s.artist && s.artist.toLowerCase().includes(filterVal)) ||
-           (s.genre && s.genre.toLowerCase().includes(filterVal)) ||
-           (s.movieTitle && s.movieTitle.toLowerCase().includes(filterVal));
+  const filtered = songsList.filter(song => {
+    const normSongGenre = normalizeGenre(song.genre);
+    const normSelectedGenre = normalizeGenre(selectedGenre);
+    const matchGenre = selectedGenre === "all" || normSongGenre === normSelectedGenre || song.genre === selectedGenre;
+
+    const songDecade = song.decade || calculateDecade(song.year);
+    const matchDecade = selectedDecade === "all" || songDecade === selectedDecade;
+
+    const matchSearch = (song.title && song.title.toLowerCase().includes(searchVal)) ||
+                        (song.artist && song.artist.toLowerCase().includes(searchVal)) ||
+                        (song.movieTitle && song.movieTitle.toLowerCase().includes(searchVal));
+
+    return matchGenre && matchDecade && matchSearch;
   });
 
-  filtered.sort((a, b) => (a.artist || "").localeCompare(b.artist || ""));
+  tbody.innerHTML = "";
 
   filtered.forEach(song => {
+    const isChecked = selectedPlaylistIds.includes(song.id) ? "checked" : "";
     const tr = document.createElement("tr");
-    const displayTitle = song.movieTitle ? `🎬 ${song.movieTitle} - ${song.title}` : song.title;
-    const normG = normalizeGenre(song.genre);
+
+    const displayTitle = song.movieTitle ? `${song.title} 🎬 (${song.movieTitle})` : song.title;
 
     tr.innerHTML = `
-      <td><input type="checkbox" class="playlist-checkbox" data-id="${song.id}"></td>
-      <td style="font-weight: 600; color: #fff;">${displayTitle}</td>
-      <td style="color: #cbd5e1;">${song.artist || '-'}</td>
-      <td><span style="color:${genreColors[normG] || '#f472b6'}; font-weight:700; font-size:0.8rem;">${normG}</span></td>
+      <td><input type="checkbox" class="playlist-checkbox" data-id="${song.id}" ${isChecked}></td>
+      <td><strong>${displayTitle}</strong></td>
+      <td>${song.artist || '-'}</td>
+      <td><span style="font-size:0.8rem; padding:2px 6px; background:#1e293b; border-radius:4px; color:#f97316;">${song.genre}</span></td>
     `;
     tbody.appendChild(tr);
+  });
+
+  document.querySelectorAll(".playlist-checkbox").forEach(chk => {
+    chk.onchange = (e) => {
+      const id = e.target.getAttribute("data-id");
+      if (e.target.checked) {
+        if (!selectedPlaylistIds.includes(id)) selectedPlaylistIds.push(id);
+      } else {
+        selectedPlaylistIds = selectedPlaylistIds.filter(x => x !== id);
+      }
+    };
   });
 }
 
@@ -444,20 +518,25 @@ function renderSongs() {
   if (!container) return;
 
   container.innerHTML = "";
-  const searchVal = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase() : "";
+const searchVal = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase() : "";
+  const selectedDecade = document.getElementById("filterDecade") ? document.getElementById("filterDecade").value : "all";
+  const artistFilterVal = document.getElementById("filterArtist") ? document.getElementById("filterArtist").value.toLowerCase() : "";
 
   let filtered = songsList.filter(song => {
     const normSongGenre = normalizeGenre(song.genre);
     const normSelectedGenre = normalizeGenre(currentSelectedGenre);
+    const matchGenre = currentSelectedGenre === "all" || normSongGenre === normSelectedGenre || song.genre === currentSelectedGenre;
 
-    const matchGenre = currentSelectedGenre === "all" || 
-                       normSongGenre === normSelectedGenre || 
-                       song.genre === currentSelectedGenre;
+    const songDecade = song.decade || calculateDecade(song.year);
+    const matchDecade = selectedDecade === "all" || songDecade === selectedDecade;
+
+    const matchArtist = !artistFilterVal || (song.artist && song.artist.toLowerCase().includes(artistFilterVal));
 
     const matchSearch = (song.title && song.title.toLowerCase().includes(searchVal)) || 
                         (song.artist && song.artist.toLowerCase().includes(searchVal)) ||
                         (song.movieTitle && song.movieTitle.toLowerCase().includes(searchVal));
-    return matchGenre && matchSearch;
+
+    return matchGenre && matchDecade && matchArtist && matchSearch;
   });
 
   filtered.sort((a, b) => {
