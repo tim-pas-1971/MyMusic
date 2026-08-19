@@ -108,14 +108,23 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error("Errore Firebase:", error);
   });
 
+  // Modal Brano
   const openBtn = document.getElementById("openModalBtn");
   if(openBtn) openBtn.onclick = () => openModal();
 
   const closeBtn = document.getElementById("closeModalBtn");
   if(closeBtn) closeBtn.onclick = () => closeModal();
 
+  // Modal Playlist - Compatibile sia con PC che Mobile (click/touchstart)
   const openPlaylistBtn = document.getElementById("openPlaylistModalBtn");
-  if(openPlaylistBtn) openPlaylistBtn.onclick = () => openPlaylistModal();
+  if (openPlaylistBtn) {
+    const handlePlaylistOpen = (e) => {
+      e.preventDefault();
+      openPlaylistModal();
+    };
+    openPlaylistBtn.onclick = handlePlaylistOpen;
+    openPlaylistBtn.addEventListener("touchstart", handlePlaylistOpen, { passive: false });
+  }
 
   const closePlaylistBtn = document.getElementById("closePlaylistModalBtn");
   if(closePlaylistBtn) closePlaylistBtn.onclick = () => closePlaylistModal();
@@ -125,10 +134,23 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target === document.getElementById("playlistModal")) closePlaylistModal(); 
   };
 
+  // Apertura / Chiusura del Pannello Cerca & Filtri
+  const toggleSearchBtn = document.getElementById("toggleSearchBtn");
+  const searchPanel = document.getElementById("searchPanel");
+  if (toggleSearchBtn && searchPanel) {
+    toggleSearchBtn.onclick = () => {
+      searchPanel.classList.toggle("open");
+    };
+  }
+
+  // Gestione Filtri Scheda Principale
   const filterGenre = document.getElementById("filterGenre");
   const filterDecade = document.getElementById("filterDecade");
   const filterArtist = document.getElementById("filterArtist");
   const resetBtn = document.getElementById("resetFiltersBtn");
+  const searchInput = document.getElementById("searchInput");
+
+  if (searchInput) searchInput.oninput = () => renderSongs();
 
   if (filterGenre) {
     filterGenre.onchange = () => {
@@ -145,7 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (resetBtn) {
     resetBtn.onclick = () => {
-      if (document.getElementById("searchInput")) document.getElementById("searchInput").value = "";
+      if (searchInput) searchInput.value = "";
       if (filterGenre) filterGenre.value = "all";
       if (filterDecade) filterDecade.value = "all";
       if (filterArtist) filterArtist.value = "";
@@ -178,6 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
+  // Campi Dinamici Modale Brano
   const genreSelect = document.getElementById("genre");
   if (genreSelect) {
     genreSelect.onchange = () => toggleMovieTitleField(genreSelect.value);
@@ -194,18 +217,14 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  const searchInput = document.getElementById("searchInput");
-  if (searchInput) searchInput.oninput = () => renderSongs();
-
-  const playlistSearchInput = document.getElementById("playlistSearchInput");
-  if (playlistSearchInput) playlistSearchInput.oninput = () => renderPlaylistTable();
-
+  // Sidebar Generi
   document.querySelectorAll(".nav-btn").forEach(btn => {
     btn.onclick = () => {
       document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
 
       currentSelectedGenre = btn.getAttribute("data-genre");
+      if (filterGenre) filterGenre.value = currentSelectedGenre;
       
       const genreTitleEl = document.getElementById("currentGenreTitle");
       if (genreTitleEl) {
@@ -217,6 +236,15 @@ document.addEventListener("DOMContentLoaded", () => {
       renderSongs();
     };
   });
+});
+
+// Funzione globale per aggiornare il contatore nel tasto Playlist
+window.updatePlaylistCount = function() {
+  const btn = document.getElementById("openPlaylistModalBtn");
+  if (btn) {
+    btn.innerText = `📋 Playlist (${selectedPlaylistIds.length})`;
+  }
+};
 
   const form = document.getElementById("addSongForm");
   if(form) {
