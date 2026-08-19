@@ -51,18 +51,27 @@ const isReadOnly = urlParams.get('mode') === 'read';
 // Normalizzazione automatica dei generi per compatibilità completa
 function normalizeGenre(genre) {
   if (!genre) return "";
+  
   // Rimuove caratteri invisibili spuri e spazi extra
-  const g = genre.replace(/\u00a0/g, " ").trim().toLowerCase();
+  const cleanGenre = genre.replace(/\u00a0/g, " ").trim();
+  const g = cleanGenre.toLowerCase();
 
-  if (g.includes("dance") || g.includes("disco") || g.includes("elettronica") || g.includes("electronic")) {
+  // Esclude esplicitamente Arabian / Belly Dance
+  if (g.includes("belly") || g.includes("arabian")) {
+    return "Arabian / Belly Dance";
+  }
+
+  // Associa a Dance / Disco / Elettronica solo i vecchi formati Dance/Disco
+  if ((g.includes("dance") && g.includes("disco")) || g.includes("elettronica") || g.includes("electronic")) {
     return "Dance / Disco / Elettronica";
   }
 
+  // Associa i vecchi formati Hindi
   if (g.includes("hindi")) {
     return "Hindi / Hindi Film Music";
   }
 
-  return genre.replace(/\u00a0/g, " ").trim();
+  return cleanGenre;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
