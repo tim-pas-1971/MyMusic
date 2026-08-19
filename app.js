@@ -562,18 +562,22 @@ function playSongInQueue(index) {
     const rawUrl = song.youtubeUrl || "";
     const audioUrl = fixDropboxUrl(rawUrl);
 
-    // Evita il ricaricamento a vuoto se la sorgente è già impostata
-    if (audioPlayer.src !== audioUrl) {
-      audioPlayer.src = audioUrl;
-      audioPlayer.load();
-    }
+    // Stacca temporaneamente l'evento per evitare chiamate doppie
+    audioPlayer.onended = null;
 
-    // Piccola pausa di 100ms per permettere al browser di bufferizzare l'audio senza scatti
-    setTimeout(() => {
-      audioPlayer.play().catch(err => {
-        console.log("Errore riproduzione:", err);
-      });
-    }, 100);
+    audioPlayer.src = audioUrl;
+    audioPlayer.load();
+
+    // Riconnette l'evento di fine brano e avvia la canzone
+    audioPlayer.play().then(() => {
+      audioPlayer.onended = () => {
+        playNextInQueue();
+      };
+    }).catch(err => {
+      console.log("Errore riproduzione o passaggio automatico:", err);
+      // In caso di errore sul singolo brano, passa comunque al successivo dopo 2 secondi
+      setTimeout(playNextInQueue, 2000);
+    });
   }
 }
 
