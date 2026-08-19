@@ -74,6 +74,20 @@ function normalizeGenre(genre) {
   return cleanGenre;
 }
 
+function calculateDecade(year) {
+  const y = parseInt(year, 10);
+  if (isNaN(y)) return "";
+  if (y >= 1960 && y <= 1969) return "dal 1960 al 1969";
+  if (y >= 1970 && y <= 1979) return "dal 1970 al 1979";
+  if (y >= 1980 && y <= 1989) return "dal 1980 al 1989";
+  if (y >= 1990 && y <= 1999) return "dal 1990 al 1999";
+  if (y >= 2000 && y <= 2009) return "dal 2000 al 2009";
+  if (y >= 2010 && y <= 2019) return "dal 2010 al 2019";
+  if (y >= 2020 && y <= 2029) return "dal 2020 al 2029";
+  if (y >= 2030 && y <= 2039) return "dal 2030 al 2039";
+  return "";
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   if (isReadOnly) {
     const addBtn = document.getElementById("openModalBtn");
@@ -116,6 +130,17 @@ document.addEventListener("DOMContentLoaded", () => {
     genreSelect.onchange = () => toggleMovieTitleField(genreSelect.value);
   }
 
+  const yearInput = document.getElementById("year");
+  if (yearInput) {
+    yearInput.oninput = () => {
+      const decadeSelect = document.getElementById("decade");
+      if (decadeSelect) {
+        const calculated = calculateDecade(yearInput.value);
+        if (calculated) decadeSelect.value = calculated;
+      }
+    };
+  }
+
   const searchInput = document.getElementById("searchInput");
   if (searchInput) searchInput.oninput = () => renderSongs();
 
@@ -156,6 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const movieTitle = (genre.includes("Colonne") || genre.includes("Hindi")) 
         ? document.getElementById("movieTitle").value.trim() 
         : "";
+      const decade = document.getElementById("decade") ? document.getElementById("decade").value : "";
 
       try {
         const snapshot = await db.collection("songs").get();
@@ -179,7 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!confirmSave) return;
         }
 
-        const songData = { artist, photoUrl, title, year, genre, youtubeUrl, movieTitle };
+        const songData = { artist, photoUrl, title, year, decade, genre, youtubeUrl, movieTitle };
 
         if (id) {
           await db.collection("songs").doc(id).update(songData);
@@ -253,13 +279,19 @@ function updateGenreCounts() {
 
 function toggleMovieTitleField(selectedGenre) {
   const movieGroup = document.getElementById("movieTitleGroup");
-  if (!movieGroup) return;
+  const decadeGroup = document.getElementById("decadeGroup");
+  const normG = normalizeGenre(selectedGenre);
 
-  if (selectedGenre.includes("Colonne") || selectedGenre.includes("Hindi")) {
-    movieGroup.style.display = "block";
-  } else {
-    movieGroup.style.display = "none";
-    document.getElementById("movieTitle").value = "";
+  const isCinema = normG.includes("Colonne") || normG.includes("Hindi");
+
+  if (movieGroup) {
+    movieGroup.style.display = isCinema ? "block" : "none";
+    if (!isCinema) document.getElementById("movieTitle").value = "";
+  }
+
+  if (decadeGroup) {
+    decadeGroup.style.display = isCinema ? "none" : "block";
+    if (isCinema && document.getElementById("decade")) document.getElementById("decade").value = "";
   }
 }
 
@@ -279,10 +311,21 @@ function openModal(songToEdit = null) {
     document.getElementById("movieTitle").value = songToEdit.movieTitle || "";
     document.getElementById("youtubeUrl").value = songToEdit.youtubeUrl || "";
     
+    // INSERITA QUI DENTRO PER IL BRANO IN MODIFICA:
+    if (document.getElementById("decade")) {
+      document.getElementById("decade").value = songToEdit.decade || calculateDecade(songToEdit.year) || "";
+    }
+    
     toggleMovieTitleField(songToEdit.genre);
   } else {
     document.getElementById("modalTitle").innerText = "Aggiungi Nuovo Brano";
     document.getElementById("songId").value = "";
+    
+    // Pulisce il campo decade quando si aggiunge un nuovo brano
+    if (document.getElementById("decade")) {
+      document.getElementById("decade").value = "";
+    }
+    
     toggleMovieTitleField(document.getElementById("genre").value);
   }
 
@@ -499,6 +542,9 @@ function renderSongs() {
       </div>
     `;
 
+    const calculatedDecade = song.decade || calculateDecade(song.year);
+    const decadeHtml = calculatedDecade ? `<p class="card-info"><strong>Decade:</strong> ${calculatedDecade}</p>` : "";
+
     card.innerHTML = `
       <div>
         <div class="artist-img-container">
@@ -509,6 +555,7 @@ function renderSongs() {
         <p class="card-info"><strong>Artista:</strong> ${song.artist || 'Sconosciuto'}</p>
         ${movieHtml}
         <p class="card-info"><strong>Anno:</strong> ${song.year || '-'}</p>
+        ${decadeHtml}
       </div>
       <div>
         ${playerHtml}
