@@ -328,7 +328,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const startQueueBtn = document.getElementById("startQueueBtn");
   if (startQueueBtn) {
-    startQueueBtn.onclick = startContinuousQueue;
+    startQueueBtn.onclick = (e) => {
+      e.preventDefault();
+      startContinuousQueue();
+    };
   }
 
   const audioPlayer = document.getElementById("continuousAudioPlayer");
@@ -536,7 +539,7 @@ function startContinuousQueue() {
   currentQueueIndex = 0;
   const playerBar = document.getElementById("playerBarContainer");
   if (playerBar) playerBar.style.display = "block";
-  
+
   playSongInQueue(currentQueueIndex);
 }
 
@@ -559,11 +562,18 @@ function playSongInQueue(index) {
     const rawUrl = song.youtubeUrl || "";
     const audioUrl = fixDropboxUrl(rawUrl);
 
-    audioPlayer.src = audioUrl;
-    audioPlayer.load();
-    audioPlayer.play().catch(err => {
-      console.log("Riproduzione automatica bloccata o errore media:", err);
-    });
+    // Evita il ricaricamento a vuoto se la sorgente è già impostata
+    if (audioPlayer.src !== audioUrl) {
+      audioPlayer.src = audioUrl;
+      audioPlayer.load();
+    }
+
+    // Piccola pausa di 100ms per permettere al browser di bufferizzare l'audio senza scatti
+    setTimeout(() => {
+      audioPlayer.play().catch(err => {
+        console.log("Errore riproduzione:", err);
+      });
+    }, 100);
   }
 }
 
