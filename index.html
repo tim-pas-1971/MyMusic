@@ -75,7 +75,7 @@
       align-items: center;
       position: sticky;
       top: 0;
-      z-index: 100;
+      z-index: 200;
     }
 
     .logo-container {
@@ -103,16 +103,21 @@
       gap: 0.75rem;
     }
 
+    /* Layout Affiancato Corretto */
     .main-layout {
       display: flex;
       flex: 1;
+      align-items: flex-start;
+      width: 100%;
     }
 
     .sidebar {
-      width: 270px;
+      width: 280px;
+      min-width: 280px;
       background-color: var(--bg-sidebar);
       border-right: 1px solid var(--border-color);
       padding: 1.5rem 1rem;
+      min-height: calc(100vh - 70px);
     }
 
     .sidebar-title {
@@ -130,7 +135,7 @@
       display: flex;
       flex-direction: column;
       gap: 0.4rem;
-      max-height: calc(100vh - 120px);
+      max-height: calc(100vh - 140px);
       overflow-y: auto;
     }
 
@@ -183,57 +188,81 @@
 
     .content-area {
       flex: 1;
-      padding: 2rem;
-      max-width: 1200px;
+      padding: 1.5rem 2rem;
+      width: calc(100% - 280px);
     }
 
     .top-controls {
       display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .top-bar-row {
+      display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 1rem;
-      margin-bottom: 2rem;
       flex-wrap: wrap;
     }
 
-    .search-container {
-      position: relative;
-      flex: 1;
-      min-width: 280px;
+    .search-panel {
+      display: none;
+      background: #151d30;
+      padding: 1rem 1.25rem;
+      border-radius: 14px;
+      border: 1px solid #2a364f;
+      flex-direction: column;
+      gap: 0.85rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+
+    .search-panel.open {
+      display: flex;
     }
 
     .search-input {
       width: 100%;
-      padding: 0.95rem 1.25rem 0.95rem 3rem;
-      background: #1e293b;
-      border: 2px solid #a855f7;
-      border-radius: 12px;
+      padding: 0.8rem 1rem 0.8rem 2.8rem;
+      background: #0f172a;
+      border: 1px solid #a855f7;
+      border-radius: 10px;
       color: #ffffff;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
       outline: none;
-      box-shadow: 0 0 15px rgba(168, 85, 247, 0.25);
-      transition: all 0.3s ease;
     }
 
-    .search-input::placeholder {
-      color: #cbd5e1;
-      font-weight: 500;
-    }
-
-    .search-input:focus {
-      border-color: #f97316;
-      background: #26334d;
-      box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
+    .search-container {
+      position: relative;
+      width: 100%;
     }
 
     .search-icon {
       position: absolute;
-      left: 1rem;
+      left: 0.9rem;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       pointer-events: none;
+    }
+
+    .filters-inline {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filters-inline select, .filters-inline input {
+      padding: 0.55rem 0.8rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.88rem;
+      outline: none;
     }
 
     .data-actions {
@@ -262,19 +291,10 @@
       box-shadow: 0 4px 14px rgba(249, 115, 22, 0.3);
     }
 
-    .btn-primary:hover {
-      opacity: 0.95;
-      transform: translateY(-1px);
-    }
-
     .btn-playlist {
       background: linear-gradient(135deg, #10b981, #059669);
       color: white;
       box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
-    }
-
-    .btn-playlist:hover {
-      transform: translateY(-1px);
     }
 
     .btn-secondary {
@@ -295,13 +315,12 @@
       color: #ffffff;
       border-left: 6px solid var(--active-section-color, #f97316);
       padding-left: 0.8rem;
-      transition: border-color 0.3s ease;
     }
 
     .songs-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.25rem;
     }
 
     .song-card {
@@ -314,12 +333,6 @@
       justify-content: space-between;
       transition: all 0.25s ease;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-
-    .song-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(249, 115, 22, 0.4);
-      box-shadow: 0 12px 24px rgba(0,0,0,0.3);
     }
 
     .artist-img-container {
@@ -397,13 +410,6 @@
       font-size: 0.9rem;
       font-weight: 600;
       padding: 0.45rem 0.75rem;
-      transition: all 0.2s ease;
-    }
-
-    .icon-btn:hover {
-      background: rgba(249, 115, 22, 0.2);
-      border-color: #f97316;
-      color: #ffffff;
     }
 
     .modal {
@@ -430,7 +436,6 @@
       padding: 1.75rem;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.6);
     }
 
     .modal-header {
@@ -453,7 +458,6 @@
       border: 1px solid #f97316;
       border-radius: 8px;
       color: #fff;
-      margin-bottom: 1rem;
       outline: none;
     }
 
@@ -483,10 +487,6 @@
       position: sticky;
       top: 0;
       z-index: 10;
-    }
-
-    .playlist-table tr:hover {
-      background-color: rgba(255, 255, 255, 0.03);
     }
 
     .player-bar-container {
@@ -532,14 +532,13 @@
       .app-header {
         padding: 0.8rem 1rem;
       }
-      .content-area {
-        padding: 1rem;
-      }
       .main-layout {
         flex-direction: column;
       }
       .sidebar {
         width: 100%;
+        min-width: 100%;
+        min-height: auto;
         border-right: none;
         border-bottom: 1px solid var(--border-color);
         padding: 1rem;
@@ -555,18 +554,13 @@
         padding: 0.5rem 0.85rem;
         font-size: 0.85rem;
       }
+      .content-area {
+        width: 100%;
+        padding: 1rem;
+      }
       .songs-grid {
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         gap: 1rem;
-      }
-      .artist-img-container {
-        height: 140px;
-      }
-      .song-card {
-        padding: 0.9rem;
-      }
-      .card-title {
-        font-size: 1.05rem;
       }
     }
   </style>
@@ -579,12 +573,13 @@
       <h1 class="app-title">MyMusic</h1>
     </div>
     <div class="header-actions">
-      <button class="btn btn-playlist" id="openPlaylistModalBtn">📋 Playlist / Sequenza</button>
+      <button class="btn btn-playlist" id="openPlaylistModalBtn">📋 Playlist (0)</button>
       <button class="btn btn-primary" id="openModalBtn">+ Aggiungi Brano</button>
     </div>
   </header>
 
   <div class="main-layout">
+    
     <nav class="sidebar">
       <h2 class="sidebar-title">GENERI</h2>
       <ul class="genre-list">
@@ -600,7 +595,7 @@
         <li><button class="nav-btn" data-genre="Hindi / Hindi Film Music">Hindi / Hindi Film Music</button></li>
         <li><button class="nav-btn" data-genre="House">House</button></li>
         <li><button class="nav-btn" data-genre="Jazz">Jazz</button></li>
-        <li><button class="nav-btn" data-genre="K-pop">K-pop</button></li>
+        <li><button class="nav-btn" data-genre="K-pop">K-pop</option></li>
         <li><button class="nav-btn" data-genre="Latino">Latino</button></li>
         <li><button class="nav-btn" data-genre="Metal / Punk">Metal / Punk</button></li>
         <li><button class="nav-btn" data-genre="Musica Classica">Musica Classica</button></li>
@@ -613,16 +608,11 @@
     </nav>
 
     <main class="content-area">
-<!-- Controlli Superiori con Ricerca e Filtri Avanzati -->
-      <div class="top-controls" style="display: flex; flex-direction: column; gap: 1rem;">
-        
-        <!-- Riga 1: Cerca a mano libera e Pulsanti Azione -->
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; width: 100%;">
-          <div class="search-container" style="flex: 1; min-width: 280px;">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput" placeholder="Cerca per titolo, artista o film..." class="search-input">
-          </div>
-          
+      
+      <div class="top-controls">
+        <div class="top-bar-row">
+          <button id="toggleSearchBtn" class="btn btn-secondary">🔍 CERCA / FILTRI</button>
+
           <div class="data-actions">
             <button id="exportJsonBtn" class="btn btn-secondary">Esporta Backup</button>
             <label for="importJsonInput" class="btn btn-secondary">Importa Backup</label>
@@ -631,62 +621,55 @@
           </div>
         </div>
 
-        <!-- Riga 2: Filtri Multipli (Genere, Decade, Artista) -->
-        <div class="filters-bar" style="display: flex; gap: 0.75rem; flex-wrap: wrap; background: #151d30; padding: 0.85rem 1.25rem; border-radius: 12px; border: 1px solid #2a364f; align-items: center;">
-          <span style="font-weight: 700; color: #f97316; font-size: 0.9rem;">🎛️ Filtri:</span>
+        <div id="searchPanel" class="search-panel">
+          <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Cerca a mano libera per titolo, artista o film..." class="search-input">
+          </div>
 
-          <!-- Filtro Genere -->
-          <select id="filterGenre" style="padding: 0.5rem 0.8rem; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 0.88rem; outline: none;">
-            <option value="all">Tutti i Generi</option>
-            <option value="Arabian / Belly Dance">Arabian / Belly Dance</option>
-            <option value="Blues">Blues</option>
-            <option value="Classical Crossover">Classical Crossover</option>
-            <option value="Colonne Sonore">Colonne Sonore</option>
-            <option value="Country / Folk">Country / Folk</option>
-            <option value="Dance / Disco / Elettronica">Dance / Disco / Elettronica</option>
-            <option value="DJ / MegaMix">DJ / MegaMix</option>
-            <option value="Gregoriana">Gregoriana</option>
-            <option value="Hindi / Hindi Film Music">Hindi / Hindi Film Music</option>
-            <option value="House">House</option>
-            <option value="Jazz">Jazz</option>
-            <option value="K-pop">K-pop</option>
-            <option value="Latino">Latino</option>
-            <option value="Metal / Punk">Metal / Punk</option>
-            <option value="Musica Classica">Musica Classica</option>
-            <option value="Pop">Pop</option>
-            <option value="Rap / Hip Hop">Rap / Hip Hop</option>
-            <option value="Reagge">Reagge</option>
-            <option value="Rock">Rock</option>
-            <option value="Soul / Funk">Soul / Funk</option>
-          </select>
+          <div class="filters-inline">
+            <span style="font-weight: 700; color: #f97316; font-size: 0.88rem;">Filtri:</span>
 
-          <!-- Filtro Decade -->
-          <select id="filterDecade" style="padding: 0.5rem 0.8rem; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 0.88rem; outline: none;">
-            <option value="all">Tutte le Decadi</option>
-            <option value="dal 1960 al 1969">dal 1960 al 1969</option>
-            <option value="dal 1970 al 1979">dal 1970 al 1979</option>
-            <option value="dal 1980 al 1989">dal 1980 al 1989</option>
-            <option value="dal 1990 al 1999">dal 1990 al 1999</option>
-            <option value="dal 2000 al 2009">dal 2000 al 2009</option>
-            <option value="dal 2010 al 2019">dal 2010 al 2019</option>
-            <option value="dal 2020 al 2029">dal 2020 al 2029</option>
-            <option value="dal 2030 al 2039">dal 2030 al 2039</option>
-          </select>
+            <select id="filterGenre">
+              <option value="all">Tutti i Generi</option>
+              <option value="Arabian / Belly Dance">Arabian / Belly Dance</option>
+              <option value="Blues">Blues</option>
+              <option value="Classical Crossover">Classical Crossover</option>
+              <option value="Colonne Sonore">Colonne Sonore</option>
+              <option value="Country / Folk">Country / Folk</option>
+              <option value="Dance / Disco / Elettronica">Dance / Disco / Elettronica</option>
+              <option value="DJ / MegaMix">DJ / MegaMix</option>
+              <option value="Gregoriana">Gregoriana</option>
+              <option value="Hindi / Hindi Film Music">Hindi / Hindi Film Music</option>
+              <option value="House">House</option>
+              <option value="Jazz">Jazz</option>
+              <option value="K-pop">K-pop</option>
+              <option value="Latino">Latino</option>
+              <option value="Metal / Punk">Metal / Punk</option>
+              <option value="Musica Classica">Musica Classica</option>
+              <option value="Pop">Pop</option>
+              <option value="Rap / Hip Hop">Rap / Hip Hop</option>
+              <option value="Reagge">Reagge</option>
+              <option value="Rock">Rock</option>
+              <option value="Soul / Funk">Soul / Funk</option>
+            </select>
 
-          <!-- Filtro Artista -->
-          <input type="text" id="filterArtist" placeholder="Filtra per Artista..." style="padding: 0.5rem 0.8rem; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 0.88rem; outline: none; min-width: 160px;">
+            <select id="filterDecade">
+              <option value="all">Tutte le Decadi</option>
+              <option value="dal 1960 al 1969">dal 1960 al 1969</option>
+              <option value="dal 1970 al 1979">dal 1970 al 1979</option>
+              <option value="dal 1980 al 1989">dal 1980 al 1989</option>
+              <option value="dal 1990 al 1999">dal 1990 al 1999</option>
+              <option value="dal 2000 al 2009">dal 2000 al 2009</option>
+              <option value="dal 2010 al 2019">dal 2010 al 2019</option>
+              <option value="dal 2020 al 2029">dal 2020 al 2029</option>
+              <option value="dal 2030 al 2039">dal 2030 al 2039</option>
+            </select>
 
-          <!-- Pulsante Azzera Filtri -->
-          <button id="resetFiltersBtn" class="btn btn-secondary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem;">❌ Azzera Filtri</button>
-        </div>
+            <input type="text" id="filterArtist" placeholder="Filtra per Artista...">
 
-      </div>
-        
-        <div class="data-actions">
-          <button id="exportJsonBtn" class="btn btn-secondary">Esporta Backup</button>
-          <label for="importJsonInput" class="btn btn-secondary">Importa Backup</label>
-          <input type="file" id="importJsonInput" accept=".json" style="display:none;">
-          <button id="exportExcelBtn" class="btn btn-secondary">Esporta Excel</button>
+            <button id="resetFiltersBtn" class="btn btn-secondary" style="padding: 0.45rem 0.8rem; font-size: 0.82rem;">❌ Reset</button>
+          </div>
         </div>
       </div>
 
@@ -695,9 +678,12 @@
       <div id="songsContainer" class="songs-grid">
         <p style="color:#cbd5e1;">Caricamento brani in corso...</p>
       </div>
+
     </main>
+
   </div>
 
+  <!-- Modal Aggiungi / Modifica Brano -->
   <div id="songModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -728,7 +714,7 @@
           <input type="number" id="year" placeholder="Es. 1968">
         </div>
 
-       <div class="form-group" id="decadeGroup">
+        <div class="form-group" id="decadeGroup">
           <label for="decade">Periodo Temporale (Decade)</label>
           <select id="decade">
             <option value="">-- Seleziona Decade --</option>
@@ -787,6 +773,7 @@
     </div>
   </div>
 
+  <!-- Modal Playlist / Selezione Sequenza Brani -->
   <div id="playlistModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -794,12 +781,10 @@
         <span class="close-btn" id="closePlaylistModalBtn">&times;</span>
       </div>
 
-      <!-- Filtri Avanzati per Sequenza -->
       <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
-        <input type="text" id="playlistSearchInput" placeholder="Cerca a mano libera per titolo, artista o film..." class="playlist-search-box" style="margin-bottom: 0;">
+        <input type="text" id="playlistSearchInput" placeholder="Cerca a mano libera per titolo, artista o film..." class="playlist-search-box">
 
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
-          <!-- Genere -->
           <select id="playlistFilterGenre" style="flex: 1; min-width: 130px; padding: 0.5rem; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 0.85rem; outline: none;">
             <option value="all">Tutti i Generi</option>
             <option value="Arabian / Belly Dance">Arabian / Belly Dance</option>
@@ -824,7 +809,6 @@
             <option value="Soul / Funk">Soul / Funk</option>
           </select>
 
-          <!-- Decade -->
           <select id="playlistFilterDecade" style="flex: 1; min-width: 130px; padding: 0.5rem; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 0.85rem; outline: none;">
             <option value="all">Tutte le Decadi</option>
             <option value="dal 1960 al 1969">dal 1960 al 1969</option>
@@ -837,7 +821,6 @@
             <option value="dal 2030 al 2039">dal 2030 al 2039</option>
           </select>
 
-          <!-- Reset -->
           <button id="resetPlaylistFiltersBtn" class="btn btn-secondary" style="padding: 0.45rem 0.75rem; font-size: 0.8rem;">❌ Reset</button>
         </div>
       </div>
