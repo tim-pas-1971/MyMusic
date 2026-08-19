@@ -613,11 +613,74 @@
     </nav>
 
     <main class="content-area">
-      <div class="top-controls">
-        <div class="search-container">
-          <span class="search-icon">🔍</span>
-          <input type="text" id="searchInput" placeholder="Cerca per titolo, artista o film..." class="search-input">
+<!-- Controlli Superiori con Ricerca e Filtri Avanzati -->
+      <div class="top-controls" style="display: flex; flex-direction: column; gap: 1rem;">
+        
+        <!-- Riga 1: Cerca a mano libera e Pulsanti Azione -->
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; width: 100%;">
+          <div class="search-container" style="flex: 1; min-width: 280px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Cerca per titolo, artista o film..." class="search-input">
+          </div>
+          
+          <div class="data-actions">
+            <button id="exportJsonBtn" class="btn btn-secondary">Esporta Backup</button>
+            <label for="importJsonInput" class="btn btn-secondary">Importa Backup</label>
+            <input type="file" id="importJsonInput" accept=".json" style="display:none;">
+            <button id="exportExcelBtn" class="btn btn-secondary">Esporta Excel</button>
+          </div>
         </div>
+
+        <!-- Riga 2: Filtri Multipli (Genere, Decade, Artista) -->
+        <div class="filters-bar" style="display: flex; gap: 0.75rem; flex-wrap: wrap; background: #151d30; padding: 0.85rem 1.25rem; border-radius: 12px; border: 1px solid #2a364f; align-items: center;">
+          <span style="font-weight: 700; color: #f97316; font-size: 0.9rem;">🎛️ Filtri:</span>
+
+          <!-- Filtro Genere -->
+          <select id="filterGenre" style="padding: 0.5rem 0.8rem; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 0.88rem; outline: none;">
+            <option value="all">Tutti i Generi</option>
+            <option value="Arabian / Belly Dance">Arabian / Belly Dance</option>
+            <option value="Blues">Blues</option>
+            <option value="Classical Crossover">Classical Crossover</option>
+            <option value="Colonne Sonore">Colonne Sonore</option>
+            <option value="Country / Folk">Country / Folk</option>
+            <option value="Dance / Disco / Elettronica">Dance / Disco / Elettronica</option>
+            <option value="DJ / MegaMix">DJ / MegaMix</option>
+            <option value="Gregoriana">Gregoriana</option>
+            <option value="Hindi / Hindi Film Music">Hindi / Hindi Film Music</option>
+            <option value="House">House</option>
+            <option value="Jazz">Jazz</option>
+            <option value="K-pop">K-pop</option>
+            <option value="Latino">Latino</option>
+            <option value="Metal / Punk">Metal / Punk</option>
+            <option value="Musica Classica">Musica Classica</option>
+            <option value="Pop">Pop</option>
+            <option value="Rap / Hip Hop">Rap / Hip Hop</option>
+            <option value="Reagge">Reagge</option>
+            <option value="Rock">Rock</option>
+            <option value="Soul / Funk">Soul / Funk</option>
+          </select>
+
+          <!-- Filtro Decade -->
+          <select id="filterDecade" style="padding: 0.5rem 0.8rem; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 0.88rem; outline: none;">
+            <option value="all">Tutte le Decadi</option>
+            <option value="dal 1960 al 1969">dal 1960 al 1969</option>
+            <option value="dal 1970 al 1979">dal 1970 al 1979</option>
+            <option value="dal 1980 al 1989">dal 1980 al 1989</option>
+            <option value="dal 1990 al 1999">dal 1990 al 1999</option>
+            <option value="dal 2000 al 2009">dal 2000 al 2009</option>
+            <option value="dal 2010 al 2019">dal 2010 al 2019</option>
+            <option value="dal 2020 al 2029">dal 2020 al 2029</option>
+            <option value="dal 2030 al 2039">dal 2030 al 2039</option>
+          </select>
+
+          <!-- Filtro Artista -->
+          <input type="text" id="filterArtist" placeholder="Filtra per Artista..." style="padding: 0.5rem 0.8rem; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 0.88rem; outline: none; min-width: 160px;">
+
+          <!-- Pulsante Azzera Filtri -->
+          <button id="resetFiltersBtn" class="btn btn-secondary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem;">❌ Azzera Filtri</button>
+        </div>
+
+      </div>
         
         <div class="data-actions">
           <button id="exportJsonBtn" class="btn btn-secondary">Esporta Backup</button>
@@ -731,7 +794,53 @@
         <span class="close-btn" id="closePlaylistModalBtn">&times;</span>
       </div>
 
-      <input type="text" id="playlistSearchInput" placeholder="Filtra elenco per titolo, artista o genere..." class="playlist-search-box">
+      <!-- Filtri Avanzati per Sequenza -->
+      <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
+        <input type="text" id="playlistSearchInput" placeholder="Cerca a mano libera per titolo, artista o film..." class="playlist-search-box" style="margin-bottom: 0;">
+
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+          <!-- Genere -->
+          <select id="playlistFilterGenre" style="flex: 1; min-width: 130px; padding: 0.5rem; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 0.85rem; outline: none;">
+            <option value="all">Tutti i Generi</option>
+            <option value="Arabian / Belly Dance">Arabian / Belly Dance</option>
+            <option value="Blues">Blues</option>
+            <option value="Classical Crossover">Classical Crossover</option>
+            <option value="Colonne Sonore">Colonne Sonore</option>
+            <option value="Country / Folk">Country / Folk</option>
+            <option value="Dance / Disco / Elettronica">Dance / Disco / Elettronica</option>
+            <option value="DJ / MegaMix">DJ / MegaMix</option>
+            <option value="Gregoriana">Gregoriana</option>
+            <option value="Hindi / Hindi Film Music">Hindi / Hindi Film Music</option>
+            <option value="House">House</option>
+            <option value="Jazz">Jazz</option>
+            <option value="K-pop">K-pop</option>
+            <option value="Latino">Latino</option>
+            <option value="Metal / Punk">Metal / Punk</option>
+            <option value="Musica Classica">Musica Classica</option>
+            <option value="Pop">Pop</option>
+            <option value="Rap / Hip Hop">Rap / Hip Hop</option>
+            <option value="Reagge">Reagge</option>
+            <option value="Rock">Rock</option>
+            <option value="Soul / Funk">Soul / Funk</option>
+          </select>
+
+          <!-- Decade -->
+          <select id="playlistFilterDecade" style="flex: 1; min-width: 130px; padding: 0.5rem; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 0.85rem; outline: none;">
+            <option value="all">Tutte le Decadi</option>
+            <option value="dal 1960 al 1969">dal 1960 al 1969</option>
+            <option value="dal 1970 al 1979">dal 1970 al 1979</option>
+            <option value="dal 1980 al 1989">dal 1980 al 1989</option>
+            <option value="dal 1990 al 1999">dal 1990 al 1999</option>
+            <option value="dal 2000 al 2009">dal 2000 al 2009</option>
+            <option value="dal 2010 al 2019">dal 2010 al 2019</option>
+            <option value="dal 2020 al 2029">dal 2020 al 2029</option>
+            <option value="dal 2030 al 2039">dal 2030 al 2039</option>
+          </select>
+
+          <!-- Reset -->
+          <button id="resetPlaylistFiltersBtn" class="btn btn-secondary" style="padding: 0.45rem 0.75rem; font-size: 0.8rem;">❌ Reset</button>
+        </div>
+      </div>
 
       <div class="playlist-table-container">
         <table class="playlist-table">
