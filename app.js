@@ -313,6 +313,15 @@ document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll(".playlist-checkbox").forEach(cb => cb.checked = false);
       if (selectAll) selectAll.checked = false;
       selectedPlaylistIds = [];
+
+      const playerBar = document.getElementById("playerBarContainer");
+      const audioPlayer = document.getElementById("continuousAudioPlayer");
+      if (playerBar) playerBar.style.display = "none";
+      if (audioPlayer) {
+        audioPlayer.pause();
+        audioPlayer.src = "";
+      }
+
       if (window.updatePlaylistCount) window.updatePlaylistCount();
     };
   }
@@ -519,14 +528,22 @@ function startContinuousQueue() {
     if (song) queueList.push(song);
   });
 
+  if (queueList.length === 0) {
+    alert("Nessun brano valido trovato per la riproduzione.");
+    return;
+  }
+
   currentQueueIndex = 0;
-  document.getElementById("playerBarContainer").style.display = "block";
+  const playerBar = document.getElementById("playerBarContainer");
+  if (playerBar) playerBar.style.display = "block";
+  
   playSongInQueue(currentQueueIndex);
 }
 
 function playSongInQueue(index) {
   if (index >= queueList.length) {
-    document.getElementById("nowPlayingText").innerText = "🎉 Sequenza completata!";
+    const nowPlaying = document.getElementById("nowPlayingText");
+    if (nowPlaying) nowPlaying.innerText = "🎉 Sequenza completata!";
     return;
   }
 
@@ -534,13 +551,20 @@ function playSongInQueue(index) {
   const audioPlayer = document.getElementById("continuousAudioPlayer");
   const nowPlaying = document.getElementById("nowPlayingText");
 
-  nowPlaying.innerText = `▶️ In riproduzione (${index + 1}/${queueList.length}): ${song.artist} - ${song.title}`;
+  if (nowPlaying) {
+    nowPlaying.innerText = `▶️ In riproduzione (${index + 1}/${queueList.length}): ${song.artist} - ${song.title}`;
+  }
 
-  const audioUrl = fixDropboxUrl(song.youtubeUrl);
-  audioPlayer.src = audioUrl;
-  audioPlayer.play().catch(err => {
-    console.log("Errore riproduzione automatica:", err);
-  });
+  if (audioPlayer) {
+    const rawUrl = song.youtubeUrl || "";
+    const audioUrl = fixDropboxUrl(rawUrl);
+
+    audioPlayer.src = audioUrl;
+    audioPlayer.load();
+    audioPlayer.play().catch(err => {
+      console.log("Riproduzione automatica bloccata o errore media:", err);
+    });
+  }
 }
 
 function playNextInQueue() {
