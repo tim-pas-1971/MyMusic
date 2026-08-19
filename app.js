@@ -454,12 +454,13 @@ function fixDropboxUrl(url) {
     return cleanUrl.replace("dl=0", "raw=1").replace("dl=1", "raw=1");
   }
 
+  // Conversione specifica per lo streaming diretto da Google Drive
   if (cleanUrl.includes("drive.google.com")) {
     let fileId = "";
     const match = cleanUrl.match(/\/d\/([^\/\?]+)/) || cleanUrl.match(/id=([^&]+)/);
     if (match && match[1]) {
       fileId = match[1];
-      return `https://lh3.googleusercontent.com/d/${fileId}`;
+      return `https://drive.google.com/uc?export=download&id=${fileId}`;
     }
   }
 
@@ -562,20 +563,16 @@ function playSongInQueue(index) {
     const rawUrl = song.youtubeUrl || "";
     const audioUrl = fixDropboxUrl(rawUrl);
 
-    // Stacca temporaneamente l'evento per evitare chiamate doppie
     audioPlayer.onended = null;
-
     audioPlayer.src = audioUrl;
     audioPlayer.load();
 
-    // Riconnette l'evento di fine brano e avvia la canzone
     audioPlayer.play().then(() => {
       audioPlayer.onended = () => {
         playNextInQueue();
       };
     }).catch(err => {
-      console.log("Errore riproduzione o passaggio automatico:", err);
-      // In caso di errore sul singolo brano, passa comunque al successivo dopo 2 secondi
+      console.log("Errore riproduzione, passaggio al successivo:", err);
       setTimeout(playNextInQueue, 2000);
     });
   }
