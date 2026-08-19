@@ -51,7 +51,8 @@ const isReadOnly = urlParams.get('mode') === 'read';
 // Normalizzazione automatica dei generi per compatibilità completa
 function normalizeGenre(genre) {
   if (!genre) return "";
-  const g = genre.trim().toLowerCase();
+  // Rimuove caratteri invisibili spuri e spazi extra
+  const g = genre.replace(/\u00a0/g, " ").trim().toLowerCase();
 
   if (g.includes("dance") || g.includes("disco") || g.includes("elettronica") || g.includes("electronic")) {
     return "Dance / Disco / Elettronica";
@@ -61,7 +62,7 @@ function normalizeGenre(genre) {
     return "Hindi / Hindi Film Music";
   }
 
-  return genre;
+  return genre.replace(/\u00a0/g, " ").trim();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
