@@ -48,7 +48,7 @@ const isReadOnly = urlParams.get('mode') === 'read';
 // Mappatura di compatibilità per non perdere la visibilità delle canzoni già salvate
 function normalizeGenre(genre) {
   if (!genre) return "";
-  if (genre === "Dance / Disco" || genre === "Musica Elettronica") return "Dance / Disco / Electronic";
+  if (genre === "Dance / Disco") return "Dance / Disco / Elettronica";
   if (genre === "Hindi Film Music") return "Hindi / Hindi Film Music";
   return genre;
 }
