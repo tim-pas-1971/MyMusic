@@ -14,17 +14,19 @@ const genreColors = {
   "Classical Crossover": "#a855f7",
   "Colonne Sonore": "#eab308",
   "Country / Folk": "#10b981",
-  "Dance / Disco": "#ec4899",
+  "Dance / Disco / Electronic": "#ec4899",
+  "DJ / MegaMix": "#06b6d4",
   "Gregoriana": "#d97706",
-  "Hindi Film Music": "#f97316",
+  "Hindi / Hindi Film Music": "#f97316",
+  "House": "#6366f1",
   "Jazz": "#eab308",
   "K-pop": "#f472b6",
   "Latino": "#ef4444",
   "Metal / Punk": "#dc2626",
   "Musica Classica": "#14b8a6",
-  "Musica Elettronica": "#06b6d4",
   "Pop": "#ff6b81",
   "Rap / Hip Hop": "#f97316",
+  "Reggae": "#84cc16",
   "Rock": "#8b5cf6",
   "Soul / Funk": "#c084fc",
   "all": "#ec4899"
@@ -38,15 +40,36 @@ let currentSelectedGenre = "all";
 let queueList = [];
 let currentQueueIndex = 0;
 
-// Verifica se l'app è aperta in modalità Sola Lettura
 const urlParams = new URLSearchParams(window.location.search);
 const isReadOnly = urlParams.get('mode') === 'read';
+
+// Mappatura compatibilità vecchi nomi generi
+function normalizeGenre(genre) {
+  if (genre === "Dance / Disco" || genre === "Musica Elettronica") return "Dance / Disco / Electronic";
+  if (genre === "Hindi Film Music") return "Hindi / Hindi Film Music";
+  if (genre === "Reagge") return "Reggae";
+  return genre;
+}
+
+// Calcolo automatico della decade dall'anno
+function calculateDecade(year) {
+  const y = parseInt(year, 10);
+  if (isNaN(y)) return "";
+  if (y >= 1960 && y <= 1969) return "1960 - 1969";
+  if (y >= 1970 && y <= 1979) return "1970 - 1979";
+  if (y >= 1980 && y <= 1989) return "1980 - 1989";
+  if (y >= 1990 && y <= 1999) return "1990 - 1999";
+  if (y >= 2000 && y <= 2009) return "2000 - 2009";
+  if (y >= 2010 && y <= 2019) return "2010 - 2019";
+  if (y >= 2020 && y <= 2029) return "2020 - 2029";
+  if (y >= 2030 && y <= 2039) return "2030 - 2039";
+  return "";
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   if (isReadOnly) {
     const addBtn = document.getElementById("openModalBtn");
     if (addBtn) addBtn.style.display = "none";
-
     const dataActions = document.querySelector(".data-actions");
     if (dataActions) dataActions.style.display = "none";
   }
@@ -84,6 +107,18 @@ document.addEventListener("DOMContentLoaded", () => {
     genreSelect.onchange = () => toggleMovieTitleField(genreSelect.value);
   }
 
+  // Calcolo automatico decade quando l'utente scrive l'anno
+  const yearInput = document.getElementById("year");
+  if (yearInput) {
+    yearInput.oninput = () => {
+      const decadeSelect = document.getElementById("decade");
+      if (decadeSelect) {
+        const calculated = calculateDecade(yearInput.value);
+        if (calculated) decadeSelect.value = calculated;
+      }
+    };
+  }
+
   const searchInput = document.getElementById("searchInput");
   if (searchInput) searchInput.oninput = () => renderSongs();
 
@@ -119,35 +154,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const photoUrl = document.getElementById("artistPhotoUrl").value.trim();
       const title = document.getElementById("title").value.trim();
       const year = document.getElementById("year").value.trim();
+      const decade = document.getElementById("decade") ? document.getElementById("decade").value : "";
       const genre = document.getElementById("genre").value;
       const youtubeUrl = document.getElementById("youtubeUrl").value.trim();
-      const movieTitle = (genre === "Colonne Sonore" || genre === "Hindi Film Music") 
+      const movieTitle = (genre === "Colonne Sonore" || genre === "Hindi / Hindi Film Music") 
         ? document.getElementById("movieTitle").value.trim() 
         : "";
 
       try {
-        const snapshot = await db.collection("songs").get();
-        let isDuplicate = false;
-
-        snapshot.forEach((doc) => {
-          if (id && doc.id === id) return;
-          const data = doc.data();
-          if (
-            data.artist && data.artist.trim().toLowerCase() === artist.toLowerCase() &&
-            data.title && data.title.trim().toLowerCase() === title.toLowerCase()
-          ) {
-            isDuplicate = true;
-          }
-        });
-
-        if (isDuplicate) {
-          const confirmSave = confirm(
-            `⚠️ ATTENZIONE: Il brano "${title}" di "${artist}" è già presente nella libreria!\n\nVuoi salvarlo ugualmente?`
-          );
-          if (!confirmSave) return;
-        }
-
-        const songData = { artist, photoUrl, title, year, genre, youtubeUrl, movieTitle };
+        const songData = { artist, photoUrl, title, year, decade, genre, youtubeUrl, movieTitle };
 
         if (id) {
           await db.collection("songs").doc(id).update(songData);
@@ -160,48 +175,15 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     };
   }
-
-  const selectAll = document.getElementById("selectAllCheckbox");
-  if (selectAll) {
-    selectAll.onchange = (e) => {
-      document.querySelectorAll(".playlist-checkbox").forEach(cb => cb.checked = e.target.checked);
-    };
-  }
-
-  const clearBtn = document.getElementById("clearSelectionBtn");
-  if (clearBtn) {
-    clearBtn.onclick = () => {
-      document.querySelectorAll(".playlist-checkbox").forEach(cb => cb.checked = false);
-      if (selectAll) selectAll.checked = false;
-    };
-  }
-
-  const startQueueBtn = document.getElementById("startQueueBtn");
-  if (startQueueBtn) {
-    startQueueBtn.onclick = startContinuousQueue;
-  }
-
-  const audioPlayer = document.getElementById("continuousAudioPlayer");
-  if (audioPlayer) {
-    audioPlayer.onended = playNextInQueue;
-  }
-
-  const exportBtn = document.getElementById("exportJsonBtn");
-  if(exportBtn) exportBtn.onclick = exportJSON;
-
-  const importInput = document.getElementById("importJsonInput");
-  if(importInput) importInput.onchange = importJSON;
-
-  const excelBtn = document.getElementById("exportExcelBtn");
-  if(excelBtn) excelBtn.onclick = exportExcel;
 });
 
 function updateGenreCounts() {
   const buttons = document.querySelectorAll(".nav-btn");
   const counts = {};
   songsList.forEach(song => {
-    if (song.genre) {
-      counts[song.genre] = (counts[song.genre] || 0) + 1;
+    const normGenre = normalizeGenre(song.genre);
+    if (normGenre) {
+      counts[normGenre] = (counts[normGenre] || 0) + 1;
     }
   });
 
@@ -220,7 +202,7 @@ function toggleMovieTitleField(selectedGenre) {
   const movieGroup = document.getElementById("movieTitleGroup");
   if (!movieGroup) return;
 
-  if (selectedGenre === "Colonne Sonore" || selectedGenre === "Hindi Film Music") {
+  if (selectedGenre === "Colonne Sonore" || selectedGenre === "Hindi / Hindi Film Music") {
     movieGroup.style.display = "block";
   } else {
     movieGroup.style.display = "none";
@@ -240,11 +222,16 @@ function openModal(songToEdit = null) {
     document.getElementById("artistPhotoUrl").value = songToEdit.photoUrl || "";
     document.getElementById("title").value = songToEdit.title || "";
     document.getElementById("year").value = songToEdit.year || "";
-    document.getElementById("genre").value = songToEdit.genre || "Pop";
+    
+    if (document.getElementById("decade")) {
+      document.getElementById("decade").value = songToEdit.decade || calculateDecade(songToEdit.year) || "";
+    }
+
+    document.getElementById("genre").value = normalizeGenre(songToEdit.genre || "Pop");
     document.getElementById("movieTitle").value = songToEdit.movieTitle || "";
     document.getElementById("youtubeUrl").value = songToEdit.youtubeUrl || "";
     
-    toggleMovieTitleField(songToEdit.genre);
+    toggleMovieTitleField(document.getElementById("genre").value);
   } else {
     document.getElementById("modalTitle").innerText = "Aggiungi Nuovo Brano";
     document.getElementById("songId").value = "";
@@ -258,108 +245,21 @@ function closeModal() {
   document.getElementById("songModal").style.display = "none";
 }
 
-function openPlaylistModal() {
-  renderPlaylistTable();
-  document.getElementById("playlistModal").style.display = "flex";
-}
-
-function closePlaylistModal() {
-  document.getElementById("playlistModal").style.display = "none";
-}
-
 function fixDropboxUrl(url) {
   if (!url) return "";
   let cleanUrl = url.trim();
-
-  // Gestione link Dropbox
   if (cleanUrl.includes("dropbox.com")) {
     return cleanUrl.replace("dl=0", "raw=1").replace("dl=1", "raw=1");
   }
-
-  // Gestione link Google Drive (formato streaming diretto nativo)
   if (cleanUrl.includes("drive.google.com")) {
     let fileId = "";
     const match = cleanUrl.match(/\/d\/([^\/\?]+)/) || cleanUrl.match(/id=([^&]+)/);
     if (match && match[1]) {
       fileId = match[1];
-      return `https://lh3.googleusercontent.com/d/${fileId}`;
+      return `https://drive.google.com/uc?export=download&id=${fileId}`;
     }
   }
-
   return cleanUrl;
-}
-
-function renderPlaylistTable() {
-  const tbody = document.getElementById("playlistTableBody");
-  if (!tbody) return;
-  tbody.innerHTML = "";
-
-  const filterVal = document.getElementById("playlistSearchInput") ? document.getElementById("playlistSearchInput").value.toLowerCase() : "";
-
-  const filtered = songsList.filter(s => {
-    return (s.title && s.title.toLowerCase().includes(filterVal)) ||
-           (s.artist && s.artist.toLowerCase().includes(filterVal)) ||
-           (s.genre && s.genre.toLowerCase().includes(filterVal)) ||
-           (s.movieTitle && s.movieTitle.toLowerCase().includes(filterVal));
-  });
-
-  filtered.sort((a, b) => (a.artist || "").localeCompare(b.artist || ""));
-
-  filtered.forEach(song => {
-    const tr = document.createElement("tr");
-    const displayTitle = song.movieTitle ? `🎬 ${song.movieTitle} - ${song.title}` : song.title;
-
-    tr.innerHTML = `
-      <td><input type="checkbox" class="playlist-checkbox" data-id="${song.id}"></td>
-      <td style="font-weight: 600; color: #fff;">${displayTitle}</td>
-      <td style="color: #cbd5e1;">${song.artist || '-'}</td>
-      <td><span style="color:${genreColors[song.genre] || '#f472b6'}; font-weight:700; font-size:0.8rem;">${song.genre}</span></td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-function startContinuousQueue() {
-  const checkboxes = document.querySelectorAll(".playlist-checkbox:checked");
-  if (checkboxes.length === 0) {
-    alert("Seleziona almeno un brano dall'elenco per avviare la riproduzione!");
-    return;
-  }
-
-  queueList = [];
-  checkboxes.forEach(cb => {
-    const songId = cb.getAttribute("data-id");
-    const song = songsList.find(s => s.id === songId);
-    if (song) queueList.push(song);
-  });
-
-  currentQueueIndex = 0;
-  document.getElementById("playerBarContainer").style.display = "block";
-  playSongInQueue(currentQueueIndex);
-}
-
-function playSongInQueue(index) {
-  if (index >= queueList.length) {
-    document.getElementById("nowPlayingText").innerText = "🎉 Sequenza completata!";
-    return;
-  }
-
-  const song = queueList[index];
-  const audioPlayer = document.getElementById("continuousAudioPlayer");
-  const nowPlaying = document.getElementById("nowPlayingText");
-
-  nowPlaying.innerText = `▶️ In riproduzione (${index + 1}/${queueList.length}): ${song.artist} - ${song.title}`;
-
-  const audioUrl = fixDropboxUrl(song.youtubeUrl);
-  audioPlayer.src = audioUrl;
-  audioPlayer.play().catch(err => {
-    console.log("Errore riproduzione automatica:", err);
-  });
-}
-
-function playNextInQueue() {
-  currentQueueIndex++;
-  playSongInQueue(currentQueueIndex);
 }
 
 function renderSongs() {
@@ -370,7 +270,8 @@ function renderSongs() {
   const searchVal = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase() : "";
 
   let filtered = songsList.filter(song => {
-    const matchGenre = currentSelectedGenre === "all" || song.genre === currentSelectedGenre;
+    const normGenre = normalizeGenre(song.genre);
+    const matchGenre = currentSelectedGenre === "all" || normGenre === currentSelectedGenre;
     const matchSearch = (song.title && song.title.toLowerCase().includes(searchVal)) || 
                         (song.artist && song.artist.toLowerCase().includes(searchVal)) ||
                         (song.movieTitle && song.movieTitle.toLowerCase().includes(searchVal));
@@ -378,24 +279,17 @@ function renderSongs() {
   });
 
   filtered.sort((a, b) => {
-    const isCinema = currentSelectedGenre === "Colonne Sonore" || currentSelectedGenre === "Hindi Film Music";
-
+    const isCinema = currentSelectedGenre === "Colonne Sonore" || currentSelectedGenre === "Hindi / Hindi Film Music";
     if (isCinema) {
       const movieA = (a.movieTitle || "").toLowerCase();
       const movieB = (b.movieTitle || "").toLowerCase();
       if (movieA !== movieB) return movieA.localeCompare(movieB);
-
-      const artistA = (a.artist || "").toLowerCase();
-      const artistB = (b.artist || "").toLowerCase();
-      return artistA.localeCompare(artistB);
+      return (a.artist || "").toLowerCase().localeCompare((b.artist || "").toLowerCase());
     } else {
       const artistA = (a.artist || "").toLowerCase();
       const artistB = (b.artist || "").toLowerCase();
       if (artistA !== artistB) return artistA.localeCompare(artistB);
-
-      const titleA = (a.title || "").toLowerCase();
-      const titleB = (b.title || "").toLowerCase();
-      return titleA.localeCompare(titleB);
+      return (a.title || "").toLowerCase().localeCompare((b.title || "").toLowerCase());
     }
   });
 
@@ -411,7 +305,8 @@ function renderSongs() {
     const initial = song.artist ? song.artist.charAt(0).toUpperCase() : "?";
     const rawPhoto = song.photoUrl || "";
     const processedPhotoUrl = fixDropboxUrl(rawPhoto);
-    const badgeColor = genreColors[song.genre] || "#f472b6";
+    const displayGenre = normalizeGenre(song.genre);
+    const badgeColor = genreColors[displayGenre] || "#f472b6";
 
     const imageHtml = processedPhotoUrl 
       ? `<img src="${processedPhotoUrl}" alt="${song.artist}" class="artist-img" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -451,6 +346,9 @@ function renderSongs() {
       ? `<p class="card-info" style="color:#eab308; font-weight:600;">🎬 <strong>Film:</strong> ${song.movieTitle}</p>` 
       : "";
 
+    const calculatedDecade = song.decade || calculateDecade(song.year);
+    const decadeDisplay = calculatedDecade ? `<p class="card-info"><strong>Decade:</strong> ${calculatedDecade}</p>` : "";
+
     const actionsHtml = isReadOnly ? "" : `
       <div class="card-actions">
         <button class="icon-btn" onclick='editSong("${song.id}")'>✏️ Modifica</button>
@@ -462,12 +360,13 @@ function renderSongs() {
       <div>
         <div class="artist-img-container">
           ${imageHtml}
-          <span class="genre-badge" style="--badge-color: ${badgeColor};">${song.genre || 'Altro'}</span>
+          <span class="genre-badge" style="--badge-color: ${badgeColor};">${displayGenre || 'Altro'}</span>
         </div>
         <h3 class="card-title">${song.title || 'Senza Titolo'}</h3>
         <p class="card-info"><strong>Artista:</strong> ${song.artist || 'Sconosciuto'}</p>
         ${movieHtml}
         <p class="card-info"><strong>Anno:</strong> ${song.year || '-'}</p>
+        ${decadeDisplay}
       </div>
       <div>
         ${playerHtml}
@@ -495,61 +394,3 @@ window.deleteSong = async function(id) {
     }
   }
 };
-
-function exportJSON() {
-  if (isReadOnly) return;
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(songsList, null, 2));
-  const a = document.createElement('a');
-  a.setAttribute("href", dataStr);
-  a.setAttribute("download", "MyMusic_Backup.json");
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-
-function importJSON(event) {
-  if (isReadOnly) return;
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = async function(e) {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (Array.isArray(data)) {
-        for (const song of data) {
-          delete song.id;
-          await db.collection("songs").add(song);
-        }
-        alert("Importazione su Cloud completata!");
-      } else {
-        alert("File non valido.");
-      }
-    } catch (err) {
-      alert("Errore nell'importazione file.");
-    }
-  };
-  reader.readAsText(file);
-}
-
-function exportExcel() {
-  if (isReadOnly) return;
-  if (songsList.length === 0) {
-    alert("Nessun brano da esportare.");
-    return;
-  }
-
-  let csv = "data:text/csv;charset=utf-8,\uFEFF";
-  csv += "Artista;Titolo;Anno;Genere;Film;Link Audio/YouTube;Link Foto\n";
-
-  songsList.forEach(s => {
-    csv += `"${s.artist || ''}";"${s.title || ''}";"${s.year || ''}";"${s.genre || ''}";"${s.movieTitle || ''}";"${s.youtubeUrl || ''}";"${s.photoUrl || ''}"\n`;
-  });
-
-  const a = document.createElement("a");
-  a.setAttribute("href", encodeURI(csv));
-  a.setAttribute("download", "MyMusic_Canzoni.csv");
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
