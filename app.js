@@ -14,9 +14,12 @@ const genreColors = {
   "Classical Crossover": "#a855f7",
   "Colonne Sonore": "#eab308",
   "Country / Folk": "#10b981",
+  "Dance / Disco": "#ec4899",
   "Dance / Disco / Elettronica": "#ec4899",
+  "Dance / Disco / Electronic": "#ec4899",
   "DJ / MegaMix": "#06b6d4",
   "Gregoriana": "#d97706",
+  "Hindi Film Music": "#f97316",
   "Hindi / Hindi Film Music": "#f97316",
   "House": "#6366f1",
   "Jazz": "#eab308",
@@ -45,17 +48,15 @@ let currentQueueIndex = 0;
 const urlParams = new URLSearchParams(window.location.search);
 const isReadOnly = urlParams.get('mode') === 'read';
 
-// Mappatura di compatibilità ultra-flessibile
+// Normalizzazione automatica dei generi per compatibilità completa
 function normalizeGenre(genre) {
   if (!genre) return "";
   const g = genre.trim().toLowerCase();
 
-  // Riconosce tutte le varianti di Dance / Disco / Elettronica
   if (g.includes("dance") || g.includes("disco") || g.includes("elettronica") || g.includes("electronic")) {
     return "Dance / Disco / Elettronica";
   }
 
-  // Riconosce tutte le varianti di Hindi Film Music
   if (g.includes("hindi")) {
     return "Hindi / Hindi Film Music";
   }
@@ -121,7 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const genreTitleEl = document.getElementById("currentGenreTitle");
       if (genreTitleEl) {
         genreTitleEl.innerText = currentSelectedGenre === "all" ? "Tutti i Generi" : currentSelectedGenre;
-        const color = genreColors[currentSelectedGenre] || "#ec4899";
+        const color = genreColors[currentSelectedGenre] || genreColors[normalizeGenre(currentSelectedGenre)] || "#ec4899";
         genreTitleEl.style.setProperty('--active-section-color', color);
       }
       
@@ -142,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const year = document.getElementById("year").value.trim();
       const genre = document.getElementById("genre").value;
       const youtubeUrl = document.getElementById("youtubeUrl").value.trim();
-      const movieTitle = (genre === "Colonne Sonore" || genre === "Hindi / Hindi Film Music") 
+      const movieTitle = (genre.includes("Colonne") || genre.includes("Hindi")) 
         ? document.getElementById("movieTitle").value.trim() 
         : "";
 
@@ -220,19 +221,22 @@ document.addEventListener("DOMContentLoaded", () => {
 function updateGenreCounts() {
   const buttons = document.querySelectorAll(".nav-btn");
   const counts = {};
+
   songsList.forEach(song => {
-    if (song.genre) {
-      counts[song.genre] = (counts[song.genre] || 0) + 1;
+    const normSongGenre = normalizeGenre(song.genre);
+    if (normSongGenre) {
+      counts[normSongGenre] = (counts[normSongGenre] || 0) + 1;
     }
   });
 
   buttons.forEach(btn => {
-    const genre = btn.getAttribute("data-genre");
-    if (genre === "all") {
+    const genreAttr = btn.getAttribute("data-genre");
+    if (genreAttr === "all") {
       btn.textContent = `Tutti i Generi (${songsList.length})`;
     } else {
-      const count = counts[genre] || 0;
-      btn.textContent = `${genre} (${count})`;
+      const normButtonGenre = normalizeGenre(genreAttr);
+      const count = counts[normButtonGenre] || counts[genreAttr] || 0;
+      btn.textContent = `${genreAttr} (${count})`;
     }
   });
 }
@@ -241,7 +245,7 @@ function toggleMovieTitleField(selectedGenre) {
   const movieGroup = document.getElementById("movieTitleGroup");
   if (!movieGroup) return;
 
-  if (selectedGenre === "Colonne Sonore" || selectedGenre === "Hindi / Hindi Film Music") {
+  if (selectedGenre.includes("Colonne") || selectedGenre.includes("Hindi")) {
     movieGroup.style.display = "block";
   } else {
     movieGroup.style.display = "none";
@@ -292,12 +296,10 @@ function fixDropboxUrl(url) {
   if (!url) return "";
   let cleanUrl = url.trim();
 
-  // Gestione link Dropbox
   if (cleanUrl.includes("dropbox.com")) {
     return cleanUrl.replace("dl=0", "raw=1").replace("dl=1", "raw=1");
   }
 
-  // Gestione link Google Drive (formato streaming diretto nativo)
   if (cleanUrl.includes("drive.google.com")) {
     let fileId = "";
     const match = cleanUrl.match(/\/d\/([^\/\?]+)/) || cleanUrl.match(/id=([^&]+)/);
@@ -329,12 +331,13 @@ function renderPlaylistTable() {
   filtered.forEach(song => {
     const tr = document.createElement("tr");
     const displayTitle = song.movieTitle ? `🎬 ${song.movieTitle} - ${song.title}` : song.title;
+    const normG = normalizeGenre(song.genre);
 
     tr.innerHTML = `
       <td><input type="checkbox" class="playlist-checkbox" data-id="${song.id}"></td>
       <td style="font-weight: 600; color: #fff;">${displayTitle}</td>
       <td style="color: #cbd5e1;">${song.artist || '-'}</td>
-      <td><span style="color:${genreColors[song.genre] || '#f472b6'}; font-weight:700; font-size:0.8rem;">${song.genre}</span></td>
+      <td><span style="color:${genreColors[normG] || '#f472b6'}; font-weight:700; font-size:0.8rem;">${normG}</span></td>
     `;
     tbody.appendChild(tr);
   });
@@ -384,7 +387,6 @@ function playNextInQueue() {
 }
 
 function renderSongs() {
-  console.log("GENERI PRESENTI NEI TUOI BRANI SU CLOUD:", songsList.map(s => s.genre));
   const container = document.getElementById("songsContainer");
   if (!container) return;
 
@@ -392,9 +394,13 @@ function renderSongs() {
   const searchVal = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase() : "";
 
   let filtered = songsList.filter(song => {
-  const normSongGenre = normalizeGenre(song.genre);
-  const normSelectedGenre = normalizeGenre(currentSelectedGenre);
-  const matchGenre = currentSelectedGenre === "all" || normSongGenre === normSelectedGenre || song.genre === currentSelectedGenre;
+    const normSongGenre = normalizeGenre(song.genre);
+    const normSelectedGenre = normalizeGenre(currentSelectedGenre);
+
+    const matchGenre = currentSelectedGenre === "all" || 
+                       normSongGenre === normSelectedGenre || 
+                       song.genre === currentSelectedGenre;
+
     const matchSearch = (song.title && song.title.toLowerCase().includes(searchVal)) || 
                         (song.artist && song.artist.toLowerCase().includes(searchVal)) ||
                         (song.movieTitle && song.movieTitle.toLowerCase().includes(searchVal));
@@ -402,7 +408,7 @@ function renderSongs() {
   });
 
   filtered.sort((a, b) => {
-    const isCinema = currentSelectedGenre === "Colonne Sonore" || currentSelectedGenre === "Hindi / Hindi Film Music";
+    const isCinema = currentSelectedGenre.includes("Colonne") || currentSelectedGenre.includes("Hindi");
 
     if (isCinema) {
       const movieA = (a.movieTitle || "").toLowerCase();
@@ -435,7 +441,8 @@ function renderSongs() {
     const initial = song.artist ? song.artist.charAt(0).toUpperCase() : "?";
     const rawPhoto = song.photoUrl || "";
     const processedPhotoUrl = fixDropboxUrl(rawPhoto);
-    const badgeColor = genreColors[song.genre] || "#f472b6";
+    const displayGenre = normalizeGenre(song.genre);
+    const badgeColor = genreColors[displayGenre] || "#f472b6";
 
     const imageHtml = processedPhotoUrl 
       ? `<img src="${processedPhotoUrl}" alt="${song.artist}" class="artist-img" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -486,7 +493,7 @@ function renderSongs() {
       <div>
         <div class="artist-img-container">
           ${imageHtml}
-          <span class="genre-badge" style="--badge-color: ${badgeColor};">${song.genre || 'Altro'}</span>
+          <span class="genre-badge" style="--badge-color: ${badgeColor};">${displayGenre || 'Altro'}</span>
         </div>
         <h3 class="card-title">${song.title || 'Senza Titolo'}</h3>
         <p class="card-info"><strong>Artista:</strong> ${song.artist || 'Sconosciuto'}</p>
