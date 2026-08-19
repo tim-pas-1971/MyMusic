@@ -14,9 +14,11 @@ const genreColors = {
   "Classical Crossover": "#a855f7",
   "Colonne Sonore": "#eab308",
   "Country / Folk": "#10b981",
-  "Dance / Disco": "#ec4899",
+  "Dance / Disco / Elettronica": "#ec4899",
+  "DJ / MegaMix": "#06b6d4",
   "Gregoriana": "#d97706",
-  "Hindi Film Music": "#f97316",
+  "Hindi / Hindi Film Music": "#f97316",
+  "House": "#6366f1",
   "Jazz": "#eab308",
   "K-pop": "#f472b6",
   "Latino": "#ef4444",
@@ -25,6 +27,7 @@ const genreColors = {
   "Musica Elettronica": "#06b6d4",
   "Pop": "#ff6b81",
   "Rap / Hip Hop": "#f97316",
+  "Reagge": "#84cc16",
   "Rock": "#8b5cf6",
   "Soul / Funk": "#c084fc",
   "all": "#ec4899"
@@ -121,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const year = document.getElementById("year").value.trim();
       const genre = document.getElementById("genre").value;
       const youtubeUrl = document.getElementById("youtubeUrl").value.trim();
-      const movieTitle = (genre === "Colonne Sonore" || genre === "Hindi Film Music") 
+      const movieTitle = (genre === "Colonne Sonore" || genre === "Hindi / Hindi Film Music") 
         ? document.getElementById("movieTitle").value.trim() 
         : "";
 
@@ -220,7 +223,7 @@ function toggleMovieTitleField(selectedGenre) {
   const movieGroup = document.getElementById("movieTitleGroup");
   if (!movieGroup) return;
 
-  if (selectedGenre === "Colonne Sonore" || selectedGenre === "Hindi Film Music") {
+  if (selectedGenre === "Colonne Sonore" || selectedGenre === "Hindi / Hindi Film Music") {
     movieGroup.style.display = "block";
   } else {
     movieGroup.style.display = "none";
@@ -378,7 +381,7 @@ function renderSongs() {
   });
 
   filtered.sort((a, b) => {
-    const isCinema = currentSelectedGenre === "Colonne Sonore" || currentSelectedGenre === "Hindi Film Music";
+    const isCinema = currentSelectedGenre === "Colonne Sonore" || currentSelectedGenre === "Hindi / Hindi Film Music";
 
     if (isCinema) {
       const movieA = (a.movieTitle || "").toLowerCase();
