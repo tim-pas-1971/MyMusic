@@ -347,6 +347,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const excelBtn = document.getElementById("exportExcelBtn");
   if(excelBtn) excelBtn.onclick = exportExcel;
+
+  const nextBtn = document.getElementById("nextTrackBtn");
+  if (nextBtn) nextBtn.onclick = playNextInQueue;
+
+  const prevBtn = document.getElementById("prevTrackBtn");
+  if (prevBtn) prevBtn.onclick = playPrevInQueue;
 });
 
 // Funzione globale per aggiornare il contatore nel tasto Playlist
@@ -545,42 +551,44 @@ function startContinuousQueue() {
 }
 
 function playSongInQueue(index) {
-  if (index >= queueList.length) {
-    const nowPlaying = document.getElementById("nowPlayingText");
-    if (nowPlaying) nowPlaying.innerText = "🎉 Sequenza completata!";
-    return;
-  }
+  if (index < 0 || index >= queueList.length) return;
 
+  currentQueueIndex = index;
   const song = queueList[index];
-  const audioPlayer = document.getElementById("continuousAudioPlayer");
+  const iframe = document.getElementById("driveAudioIframe");
   const nowPlaying = document.getElementById("nowPlayingText");
 
   if (nowPlaying) {
     nowPlaying.innerText = `▶️ In riproduzione (${index + 1}/${queueList.length}): ${song.artist} - ${song.title}`;
   }
 
-  if (audioPlayer) {
+  if (iframe) {
     const rawUrl = song.youtubeUrl || "";
-    const audioUrl = fixDropboxUrl(rawUrl);
-
-    audioPlayer.onended = null;
-    audioPlayer.src = audioUrl;
-    audioPlayer.load();
-
-    audioPlayer.play().then(() => {
-      audioPlayer.onended = () => {
-        playNextInQueue();
-      };
-    }).catch(err => {
-      console.log("Errore riproduzione, passaggio al successivo:", err);
-      setTimeout(playNextInQueue, 2000);
-    });
+    let fileId = "";
+    const match = rawUrl.match(/\/d\/([^\/\?]+)/) || rawUrl.match(/id=([^&]+)/);
+    
+    if (match && match[1]) {
+      fileId = match[1];
+      iframe.src = `https://drive.google.com/file/d/${fileId}/preview`;
+    } else {
+      iframe.src = fixDropboxUrl(rawUrl);
+    }
   }
 }
 
 function playNextInQueue() {
-  currentQueueIndex++;
-  playSongInQueue(currentQueueIndex);
+  if (currentQueueIndex + 1 < queueList.length) {
+    playSongInQueue(currentQueueIndex + 1);
+  } else {
+    const nowPlaying = document.getElementById("nowPlayingText");
+    if (nowPlaying) nowPlaying.innerText = "🎉 Sequenza completata!";
+  }
+}
+
+function playPrevInQueue() {
+  if (currentQueueIndex - 1 >= 0) {
+    playSongInQueue(currentQueueIndex - 1);
+  }
 }
 
 function renderSongs() {
