@@ -43,6 +43,7 @@ let songsList = [];
 let currentSelectedGenre = "all";
 let queueList = [];
 let currentQueueIndex = 0;
+let selectedPlaylistIds = [];
 
 // Verifica se l'app è aperta in modalità Sola Lettura
 const urlParams = new URLSearchParams(window.location.search);
@@ -52,21 +53,17 @@ const isReadOnly = urlParams.get('mode') === 'read';
 function normalizeGenre(genre) {
   if (!genre) return "";
   
-  // Rimuove caratteri invisibili spuri e spazi extra
   const cleanGenre = genre.replace(/\u00a0/g, " ").trim();
   const g = cleanGenre.toLowerCase();
 
-  // Esclude esplicitamente Arabian / Belly Dance
   if (g.includes("belly") || g.includes("arabian")) {
     return "Arabian / Belly Dance";
   }
 
-  // Associa a Dance / Disco / Elettronica solo i vecchi formati Dance/Disco
   if ((g.includes("dance") && g.includes("disco")) || g.includes("elettronica") || g.includes("electronic")) {
     return "Dance / Disco / Elettronica";
   }
 
-  // Associa i vecchi formati Hindi
   if (g.includes("hindi")) {
     return "Hindi / Hindi Film Music";
   }
@@ -115,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeBtn = document.getElementById("closeModalBtn");
   if(closeBtn) closeBtn.onclick = () => closeModal();
 
-  // Modal Playlist - Compatibile sia con PC che Mobile (click/touchstart)
+  // Modal Playlist - Compatibile sia con PC che Mobile
   const openPlaylistBtn = document.getElementById("openPlaylistModalBtn");
   if (openPlaylistBtn) {
     const handlePlaylistOpen = (e) => {
@@ -236,16 +233,8 @@ document.addEventListener("DOMContentLoaded", () => {
       renderSongs();
     };
   });
-});
 
-// Funzione globale per aggiornare il contatore nel tasto Playlist
-window.updatePlaylistCount = function() {
-  const btn = document.getElementById("openPlaylistModalBtn");
-  if (btn) {
-    btn.innerText = `📋 Playlist (${selectedPlaylistIds.length})`;
-  }
-};
-
+  // Salvataggio Modulo Brano
   const form = document.getElementById("addSongForm");
   if(form) {
     form.onsubmit = async (e) => {
@@ -300,10 +289,21 @@ window.updatePlaylistCount = function() {
     };
   }
 
+  // Controlli Tabella Playlist
   const selectAll = document.getElementById("selectAllCheckbox");
   if (selectAll) {
     selectAll.onchange = (e) => {
-      document.querySelectorAll(".playlist-checkbox").forEach(cb => cb.checked = e.target.checked);
+      const isChecked = e.target.checked;
+      document.querySelectorAll(".playlist-checkbox").forEach(cb => {
+        cb.checked = isChecked;
+        const id = cb.getAttribute("data-id");
+        if (isChecked) {
+          if (!selectedPlaylistIds.includes(id)) selectedPlaylistIds.push(id);
+        } else {
+          selectedPlaylistIds = selectedPlaylistIds.filter(x => x !== id);
+        }
+      });
+      if (window.updatePlaylistCount) window.updatePlaylistCount();
     };
   }
 
@@ -312,6 +312,8 @@ window.updatePlaylistCount = function() {
     clearBtn.onclick = () => {
       document.querySelectorAll(".playlist-checkbox").forEach(cb => cb.checked = false);
       if (selectAll) selectAll.checked = false;
+      selectedPlaylistIds = [];
+      if (window.updatePlaylistCount) window.updatePlaylistCount();
     };
   }
 
@@ -334,6 +336,14 @@ window.updatePlaylistCount = function() {
   const excelBtn = document.getElementById("exportExcelBtn");
   if(excelBtn) excelBtn.onclick = exportExcel;
 });
+
+// Funzione globale per aggiornare il contatore nel tasto Playlist
+window.updatePlaylistCount = function() {
+  const btn = document.getElementById("openPlaylistModalBtn");
+  if (btn) {
+    btn.innerText = `📋 Playlist (${selectedPlaylistIds.length})`;
+  }
+};
 
 function updateGenreCounts() {
   const buttons = document.querySelectorAll(".nav-btn");
@@ -392,7 +402,6 @@ function openModal(songToEdit = null) {
     document.getElementById("movieTitle").value = songToEdit.movieTitle || "";
     document.getElementById("youtubeUrl").value = songToEdit.youtubeUrl || "";
     
-    // INSERITA QUI DENTRO PER IL BRANO IN MODIFICA:
     if (document.getElementById("decade")) {
       document.getElementById("decade").value = songToEdit.decade || calculateDecade(songToEdit.year) || "";
     }
@@ -402,7 +411,6 @@ function openModal(songToEdit = null) {
     document.getElementById("modalTitle").innerText = "Aggiungi Nuovo Brano";
     document.getElementById("songId").value = "";
     
-    // Pulisce il campo decade quando si aggiunge un nuovo brano
     if (document.getElementById("decade")) {
       document.getElementById("decade").value = "";
     }
@@ -494,20 +502,19 @@ function renderPlaylistTable() {
       } else {
         selectedPlaylistIds = selectedPlaylistIds.filter(x => x !== id);
       }
+      if (window.updatePlaylistCount) window.updatePlaylistCount();
     };
   });
 }
 
 function startContinuousQueue() {
-  const checkboxes = document.querySelectorAll(".playlist-checkbox:checked");
-  if (checkboxes.length === 0) {
+  if (selectedPlaylistIds.length === 0) {
     alert("Seleziona almeno un brano dall'elenco per avviare la riproduzione!");
     return;
   }
 
   queueList = [];
-  checkboxes.forEach(cb => {
-    const songId = cb.getAttribute("data-id");
+  selectedPlaylistIds.forEach(songId => {
     const song = songsList.find(s => s.id === songId);
     if (song) queueList.push(song);
   });
@@ -546,7 +553,7 @@ function renderSongs() {
   if (!container) return;
 
   container.innerHTML = "";
-const searchVal = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase() : "";
+  const searchVal = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase() : "";
   const selectedDecade = document.getElementById("filterDecade") ? document.getElementById("filterDecade").value : "all";
   const artistFilterVal = document.getElementById("filterArtist") ? document.getElementById("filterArtist").value.toLowerCase() : "";
 
