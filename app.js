@@ -460,13 +460,33 @@ function fixDropboxUrl(url) {
     return cleanUrl.replace("dl=0", "raw=1").replace("dl=1", "raw=1");
   }
 
-  // Conversione specifica per lo streaming diretto da Google Drive
   if (cleanUrl.includes("drive.google.com")) {
     let fileId = "";
     const match = cleanUrl.match(/\/d\/([^\/\?]+)/) || cleanUrl.match(/id=([^&]+)/);
     if (match && match[1]) {
       fileId = match[1];
-      return `https://drive.google.com/uc?export=download&id=${fileId}`;
+      return `https://lh3.googleusercontent.com/d/${fileId}`;
+    }
+  }
+
+  return cleanUrl;
+}
+
+// Nuova funzione dedicata SOLO all'audio direct-stream di Google Drive
+function getDirectAudioUrl(url) {
+  if (!url) return "";
+  let cleanUrl = url.trim();
+
+  if (cleanUrl.includes("dropbox.com")) {
+    return cleanUrl.replace("dl=0", "raw=1").replace("dl=1", "raw=1");
+  }
+
+  if (cleanUrl.includes("drive.google.com")) {
+    let fileId = "";
+    const match = cleanUrl.match(/\/d\/([^\/\?]+)/) || cleanUrl.match(/id=([^&]+)/);
+    if (match && match[1]) {
+      fileId = match[1];
+      return `https://docs.google.com/uc?export=download&id=${fileId}`;
     }
   }
 
@@ -551,28 +571,41 @@ function startContinuousQueue() {
 }
 
 function playSongInQueue(index) {
-  if (index < 0 || index >= queueList.length) return;
+  if (index < 0 || index >= queueList.length) {
+    const nowPlaying = document.getElementById("nowPlayingText");
+    if (nowPlaying) nowPlaying.innerText = "🎉 Sequenza completata!";
+    return;
+  }
 
   currentQueueIndex = index;
   const song = queueList[index];
-  const iframe = document.getElementById("driveAudioIframe");
+  const audioPlayer = document.getElementById("continuousAudioPlayer");
   const nowPlaying = document.getElementById("nowPlayingText");
 
   if (nowPlaying) {
     nowPlaying.innerText = `▶️ In riproduzione (${index + 1}/${queueList.length}): ${song.artist} - ${song.title}`;
   }
 
-  if (iframe) {
+  if (audioPlayer) {
     const rawUrl = song.youtubeUrl || "";
-    let fileId = "";
-    const match = rawUrl.match(/\/d\/([^\/\?]+)/) || rawUrl.match(/id=([^&]+)/);
-    
-    if (match && match[1]) {
-      fileId = match[1];
-      iframe.src = `https://drive.google.com/file/d/${fileId}/preview`;
-    } else {
-      iframe.src = fixDropboxUrl(rawUrl);
-    }
+    const audioUrl = getDirectAudioUrl(rawUrl);
+
+    audioPlayer.onended = null;
+    audioPlayer.src = audioUrl;
+    audioPlayer.load();
+
+    audioPlayer.play().then(() => {
+      // Quando il brano termina, passa AUTOMATICAMENTE al successivo
+      audioPlayer.onended = () => {
+        playNextInQueue();
+      };
+    }).catch(err => {
+      console.log("Autoplay limitato o errore file, passaggio al successivo tra 3 secondi...", err);
+      // Se un file non carica, salta al successivo da solo dopo 3 secondi
+      setTimeout(() => {
+        playNextInQueue();
+      }, 3000);
+    });
   }
 }
 
