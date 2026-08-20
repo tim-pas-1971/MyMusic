@@ -486,7 +486,7 @@ function getDirectAudioUrl(url) {
     const match = cleanUrl.match(/\/d\/([^\/\?]+)/) || cleanUrl.match(/id=([^&]+)/);
     if (match && match[1]) {
       fileId = match[1];
-      return `https://docs.google.com/uc?export=download&id=${fileId}`;
+      return `https://drive-audio-proxy.pascali-tiziana.workers.dev/?id=${fileId}`;
     }
   }
 
