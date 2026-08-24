@@ -11,6 +11,7 @@ const firebaseConfig = {
 const genreColors = {
   "Arabian / Belly Dance": "#f59e0b",
   "Blues": "#3b82f6",
+  "Celtica / New Age": "#059669",
   "Classical Crossover": "#a855f7",
   "Colonne Sonore": "#eab308",
   "Country / Folk": "#10b981",
@@ -33,6 +34,7 @@ const genreColors = {
   "Reagge": "#84cc16",
   "Rock": "#8b5cf6",
   "Soul / Funk": "#c084fc",
+  "Techno": "#0284c7",
   "all": "#ec4899"
 };
 
