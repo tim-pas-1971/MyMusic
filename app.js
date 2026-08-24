@@ -22,7 +22,7 @@ const genreColors = {
   "Gregoriana": "#d97706",
   "Hindi Film Music": "#f97316",
   "Hindi / Hindi Film Music": "#f97316",
-  "House": "#6366f1",
+  "House / Afro House": "#6366f1",
   "Jazz": "#eab308",
   "K-pop": "#f472b6",
   "Latino": "#ef4444",
