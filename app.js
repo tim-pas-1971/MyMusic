@@ -411,6 +411,8 @@ function openModal(songToEdit = null) {
   const form = document.getElementById("addSongForm");
   form.reset();
 
+  const genreSelect = document.getElementById("genre");
+
   if (songToEdit) {
     document.getElementById("modalTitle").innerText = "Modifica Brano";
     document.getElementById("songId").value = songToEdit.id;
@@ -418,7 +420,7 @@ function openModal(songToEdit = null) {
     document.getElementById("artistPhotoUrl").value = songToEdit.photoUrl || "";
     document.getElementById("title").value = songToEdit.title || "";
     document.getElementById("year").value = songToEdit.year || "";
-    document.getElementById("genre").value = songToEdit.genre || "Pop";
+    if (genreSelect) genreSelect.value = songToEdit.genre || "Pop";
     document.getElementById("movieTitle").value = songToEdit.movieTitle || "";
     document.getElementById("youtubeUrl").value = songToEdit.youtubeUrl || "";
     
@@ -431,11 +433,20 @@ function openModal(songToEdit = null) {
     document.getElementById("modalTitle").innerText = "Aggiungi Nuovo Brano";
     document.getElementById("songId").value = "";
     
+    // PRESELEZIONA AUTOMATICAMENTE IL GENERE ATTIVO
+    if (genreSelect) {
+      if (currentSelectedGenre && currentSelectedGenre !== "all") {
+        genreSelect.value = currentSelectedGenre;
+      } else {
+        genreSelect.selectedIndex = 0;
+      }
+    }
+
     if (document.getElementById("decade")) {
       document.getElementById("decade").value = "";
     }
     
-    toggleMovieTitleField(document.getElementById("genre").value);
+    toggleMovieTitleField(genreSelect ? genreSelect.value : "");
   }
 
   document.getElementById("songModal").style.display = "flex";
