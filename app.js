@@ -1,12 +1,25 @@
-// Configurazione Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyAXgGNk2vCMkSFi7Ub6WSp7gBvJT7Mbi1Q",
-  authDomain: "studio-82288772-a99ab.firebaseapp.com",
-  projectId: "studio-82288772-a99ab",
-  storageBucket: "studio-82288772-a99ab.firebasestorage.app",
-  messagingSenderId: "48796554059",
-  appId: "1:48796554059:web:7cf1c63eadcba83af60ece"
-};
+// --- GESTIONE ARCHIVIO LOCALE (LOCALSTORAGE) ---
+function getStoredSongs() {
+  const localData = localStorage.getItem("mymusic_songs");
+  if (localData) {
+    try {
+      return JSON.parse(localData);
+    } catch (e) {
+      console.error("Errore lettura LocalStorage:", e);
+    }
+  }
+  return [];
+}
+
+function saveSongsToStorage(data) {
+  localStorage.setItem("mymusic_songs", JSON.stringify(data));
+}
+
+let songsList = getStoredSongs();
+let currentSelectedGenre = "all";
+let queueList = [];
+let currentQueueIndex = 0;
+let selectedPlaylistIds = [];
 
 const genreColors = {
   "Arabian / Belly Dance": "#f59e0b",
@@ -37,15 +50,6 @@ const genreColors = {
   "Techno": "#0284c7",
   "all": "#ec4899"
 };
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-let songsList = [];
-let currentSelectedGenre = "all";
-let queueList = [];
-let currentQueueIndex = 0;
-let selectedPlaylistIds = [];
 
 // Verifica se l'app è aperta in modalità Sola Lettura
 const urlParams = new URLSearchParams(window.location.search);
@@ -96,16 +100,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (dataActions) dataActions.style.display = "none";
   }
 
-  db.collection("songs").onSnapshot((snapshot) => {
-    songsList = [];
-    snapshot.forEach((doc) => {
-      songsList.push({ id: doc.id, ...doc.data() });
-    });
-    updateGenreCounts();
-    renderSongs();
-  }, (error) => {
-    console.error("Errore Firebase:", error);
-  });
+  // Caricamento iniziale dei brani e dei contatori da LocalStorage
+  updateGenreCounts();
+  renderSongs();
 
   // Modal Brano
   const openBtn = document.getElementById("openModalBtn");
@@ -256,12 +253,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const decade = document.getElementById("decade") ? document.getElementById("decade").value : "";
 
       try {
-        const snapshot = await db.collection("songs").get();
         let isDuplicate = false;
 
-        snapshot.forEach((doc) => {
-          if (id && doc.id === id) return;
-          const data = doc.data();
+        songsList.forEach((data) => {
+          if (id && data.id === id) return;
           if (
             data.artist && data.artist.trim().toLowerCase() === artist.toLowerCase() &&
             data.title && data.title.trim().toLowerCase() === title.toLowerCase()
@@ -277,13 +272,22 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!confirmSave) return;
         }
 
-        const songData = { artist, photoUrl, title, year, decade, genre, youtubeUrl, movieTitle };
-
         if (id) {
-          await db.collection("songs").doc(id).update(songData);
+          const index = songsList.findIndex(s => s.id === id);
+          if (index !== -1) {
+            songsList[index] = { id, artist, photoUrl, title, year, decade, genre, youtubeUrl, movieTitle };
+          }
         } else {
-          await db.collection("songs").add(songData);
+          const newSong = { 
+            id: Date.now().toString(), 
+            artist, photoUrl, title, year, decade, genre, youtubeUrl, movieTitle 
+          };
+          songsList.push(newSong);
         }
+
+        saveSongsToStorage(songsList);
+        updateGenreCounts();
+        renderSongs();
         closeModal();
       } catch (err) {
         alert("Errore durante l'operazione: " + err.message);
@@ -433,7 +437,6 @@ function openModal(songToEdit = null) {
     document.getElementById("modalTitle").innerText = "Aggiungi Nuovo Brano";
     document.getElementById("songId").value = "";
     
-    // PRESELEZIONA AUTOMATICAMENTE IL GENERE ATTIVO
     if (genreSelect) {
       if (currentSelectedGenre && currentSelectedGenre !== "all") {
         genreSelect.value = currentSelectedGenre;
@@ -485,7 +488,6 @@ function fixDropboxUrl(url) {
   return cleanUrl;
 }
 
-// Nuova funzione dedicata SOLO all'audio direct-stream di Google Drive
 function getDirectAudioUrl(url) {
   if (!url) return "";
   let cleanUrl = url.trim();
@@ -608,13 +610,11 @@ function playSongInQueue(index) {
     audioPlayer.load();
 
     audioPlayer.play().then(() => {
-      // Quando il brano termina, passa AUTOMATICAMENTE al successivo
       audioPlayer.onended = () => {
         playNextInQueue();
       };
     }).catch(err => {
       console.log("Autoplay limitato o errore file, passaggio al successivo tra 3 secondi...", err);
-      // Se un file non carica, salta al successivo da solo dopo 3 secondi
       setTimeout(() => {
         playNextInQueue();
       }, 3000);
@@ -776,14 +776,13 @@ window.editSong = function(id) {
   if (song) openModal(song);
 };
 
-window.deleteSong = async function(id) {
+window.deleteSong = function(id) {
   if (isReadOnly) return;
   if (confirm("Vuoi davvero eliminare questo brano?")) {
-    try {
-      await db.collection("songs").doc(id).delete();
-    } catch (err) {
-      alert("Errore eliminazione: " + err.message);
-    }
+    songsList = songsList.filter(s => s.id !== id);
+    saveSongsToStorage(songsList);
+    updateGenreCounts();
+    renderSongs();
   }
 };
 
@@ -804,20 +803,23 @@ function importJSON(event) {
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = async function(e) {
+  reader.onload = function(e) {
     try {
       const data = JSON.parse(e.target.result);
       if (Array.isArray(data)) {
-        for (const song of data) {
-          delete song.id;
-          await db.collection("songs").add(song);
-        }
-        alert("Importazione su Cloud completata!");
+        songsList = data.map((song, idx) => ({
+          ...song,
+          id: song.id || (Date.now() + idx).toString()
+        }));
+        saveSongsToStorage(songsList);
+        updateGenreCounts();
+        renderSongs();
+        alert(`Ripristino completato! Caricati ${songsList.length} brani.`);
       } else {
         alert("File non valido.");
       }
     } catch (err) {
-      alert("Errore nell'importazione file.");
+      alert("Errore nell'importazione file JSON.");
     }
   };
   reader.readAsText(file);
