@@ -1,13 +1,31 @@
-// --- GESTIONE ARCHIVIO LOCALE (LOCALSTORAGE) ---
-function getStoredSongs() {
+// --- GESTIONE ARCHIVIO AUTOMATICO (GITHUB / LOCALSTORAGE) ---
+async function loadInitialSongs() {
+  // 1. Se ci sono dati locali (es. sul PC di amministrazione), carica quelli
   const localData = localStorage.getItem("mymusic_songs");
   if (localData) {
     try {
-      return JSON.parse(localData);
+      const parsed = JSON.parse(localData);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
     } catch (e) {
       console.error("Errore lettura LocalStorage:", e);
     }
   }
+
+  // 2. Altrimenti (es. da cellulare o terzi), scarica automaticamente songs.json dal server
+  try {
+    const response = await fetch("./songs.json?v=" + Date.now()); // Query string per evitare la cache del browser
+    if (response.ok) {
+      const remoteSongs = await response.json();
+      if (Array.isArray(remoteSongs) && remoteSongs.length > 0) {
+        return remoteSongs;
+      }
+    }
+  } catch (err) {
+    console.log("Nessun file songs.json remoto trovato o errore di rete:", err);
+  }
+
   return [];
 }
 
@@ -15,7 +33,7 @@ function saveSongsToStorage(data) {
   localStorage.setItem("mymusic_songs", JSON.stringify(data));
 }
 
-let songsList = getStoredSongs();
+let songsList = [];
 let currentSelectedGenre = "all";
 let queueList = [];
 let currentQueueIndex = 0;
@@ -91,7 +109,7 @@ function calculateDecade(year) {
   return "";
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   if (isReadOnly) {
     const addBtn = document.getElementById("openModalBtn");
     if (addBtn) addBtn.style.display = "none";
@@ -100,7 +118,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (dataActions) dataActions.style.display = "none";
   }
 
-  // Caricamento iniziale dei brani e dei contatori da LocalStorage
+  // Caricamento iniziale asincrono (Locale o master JSON da GitHub)
+  songsList = await loadInitialSongs();
   updateGenreCounts();
   renderSongs();
 
@@ -791,7 +810,7 @@ function exportJSON() {
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(songsList, null, 2));
   const a = document.createElement('a');
   a.setAttribute("href", dataStr);
-  a.setAttribute("download", "MyMusic_Backup.json");
+  a.setAttribute("download", "songs.json");
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -890,28 +909,6 @@ function importJSON(event) {
 
   // Resetta l'input per permettere ri-selezioni immediate
   event.target.value = '';
-}
-
-function exportExcel() {
-  if (isReadOnly) return;
-  if (songsList.length === 0) {
-    alert("Nessun brano da esportare.");
-    return;
-  }
-
-  let csv = "data:text/csv;charset=utf-8,\uFEFF";
-  csv += "Artista;Titolo;Anno;Genere;Film;Link Audio/YouTube;Link Foto\n";
-
-  songsList.forEach(s => {
-    csv += `"${s.artist || ''}";"${s.title || ''}";"${s.year || ''}";"${s.genre || ''}";"${s.movieTitle || ''}";"${s.youtubeUrl || ''}";"${s.photoUrl || ''}"\n`;
-  });
-
-  const a = document.createElement("a");
-  a.setAttribute("href", encodeURI(csv));
-  a.setAttribute("download", "MyMusic_Canzoni.csv");
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
 }
 
 function exportExcel() {
