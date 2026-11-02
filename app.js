@@ -805,12 +805,12 @@ function importJSON(event) {
   const fileName = file.name.toLowerCase();
   const reader = new FileReader();
 
-  // Caso 1: Importazione da File JSON
+  // Caso 1: File JSON (.json)
   if (fileName.endsWith('.json')) {
     reader.onload = function(e) {
       try {
         const data = JSON.parse(e.target.result);
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           songsList = data.map((song, idx) => ({
             ...song,
             id: song.id || (Date.now() + idx).toString()
@@ -820,28 +820,32 @@ function importJSON(event) {
           renderSongs();
           alert(`Ripristino completato! Caricati ${songsList.length} brani.`);
         } else {
-          alert("File JSON non valido.");
+          alert("Il file JSON è vuoto o non valido.");
         }
       } catch (err) {
-        alert("Errore nell'importazione del file JSON.");
+        alert("Errore nella lettura del file JSON: " + err.message);
       }
     };
-    reader.readAsText(file);
+    reader.readAsText(file, 'UTF-8');
   } 
-  // Caso 2: Importazione da File CSV / Excel
-  else if (fileName.endsWith('.csv') || fileName.endsWith('.txt')) {
+  // Caso 2: File CSV / Excel (.csv o .txt)
+  else {
     reader.onload = function(e) {
       try {
-        const lines = e.target.result.split(/\r\n|\n/);
+        const content = e.target.result;
+        const lines = content.split(/\r\n|\n/);
         const importedSongs = [];
 
-        // Scorre le righe ignorando l'intestazione
+        // Rileva in automatico se il separatore è ';' oppure ','
+        const firstLine = lines[0] || "";
+        const separator = firstLine.includes(';') ? ';' : ',';
+
         for (let i = 1; i < lines.length; i++) {
           const line = lines[i].trim();
           if (!line) continue;
 
-          // Separazione dei campi per punto e comma (;) o virgola (,)
-          const cols = line.split(';').map(c => c.replace(/^"|"$/g, '').trim());
+          // Splitta e pulisce le colonne da eventuali virgolette
+          const cols = line.split(separator).map(c => c.replace(/^"|"$/g, '').trim());
 
           if (cols.length >= 2) {
             const artist = cols[0] || '';
@@ -858,7 +862,7 @@ function importJSON(event) {
                 artist,
                 title,
                 year,
-                genre,
+                genre: genre || 'Pop',
                 movieTitle,
                 youtubeUrl,
                 photoUrl,
@@ -873,18 +877,41 @@ function importJSON(event) {
           saveSongsToStorage(songsList);
           updateGenreCounts();
           renderSongs();
-          alert(`Ripristino completato da Excel! Caricati ${songsList.length} brani.`);
+          alert(`Ripristino completato da Excel/CSV! Caricati ${songsList.length} brani.`);
         } else {
-          alert("Nessun brano valido trovato nel file Excel/CSV.");
+          alert("Nessun brano valido estratto dal file CSV.");
         }
       } catch (err) {
-        alert("Errore durante la lettura del file CSV.");
+        alert("Errore nell'elaborazione del file CSV: " + err.message);
       }
     };
-    reader.readAsText(file);
-  } else {
-    alert("Formato file non supportato. Seleziona un file .json o .csv.");
+    reader.readAsText(file, 'ISO-8859-1'); // Preserva accenti e caratteri italiani da Excel
   }
+
+  // Resetta l'input per permettere ri-selezioni immediate
+  event.target.value = '';
+}
+
+function exportExcel() {
+  if (isReadOnly) return;
+  if (songsList.length === 0) {
+    alert("Nessun brano da esportare.");
+    return;
+  }
+
+  let csv = "data:text/csv;charset=utf-8,\uFEFF";
+  csv += "Artista;Titolo;Anno;Genere;Film;Link Audio/YouTube;Link Foto\n";
+
+  songsList.forEach(s => {
+    csv += `"${s.artist || ''}";"${s.title || ''}";"${s.year || ''}";"${s.genre || ''}";"${s.movieTitle || ''}";"${s.youtubeUrl || ''}";"${s.photoUrl || ''}"\n`;
+  });
+
+  const a = document.createElement("a");
+  a.setAttribute("href", encodeURI(csv));
+  a.setAttribute("download", "MyMusic_Canzoni.csv");
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
 function exportExcel() {
