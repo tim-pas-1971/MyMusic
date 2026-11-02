@@ -1,32 +1,60 @@
-// --- GESTIONE ARCHIVIO AUTOMATICO (GITHUB / LOCALSTORAGE) ---
+// --- CONFIGURAZIONE SUPABASE ---
+const SUPABASE_URL = "https://yksnrbfqzgdjkoqilloc.supabase.co";
+const SUPABASE_KEY = "sb_publishable_nTummrisgVmS2GNnQ_kk0g_0fN6Y3M1S29m";
+
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// --- GESTIONE ARCHIVIO (SUPABASE / LOCALSTORAGE) ---
 async function loadInitialSongs() {
-  // 1. Se ci sono dati locali (es. sul PC di amministrazione), carica quelli
+  try {
+    const { data, error } = await _supabase.from('songs').select('*');
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+      saveSongsToStorage(data);
+      return data;
+    }
+  } catch (err) {
+    console.error("Errore nel caricamento da Supabase, ricorso al backup locale:", err.message);
+  }
+
+  // Backup in LocalStorage se offline o prima migrazione
   const localData = localStorage.getItem("mymusic_songs");
   if (localData) {
     try {
-      const parsed = JSON.parse(localData);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
+      return JSON.parse(localData);
     } catch (e) {
       console.error("Errore lettura LocalStorage:", e);
     }
   }
-
-  // 2. Altrimenti (es. da cellulare o terzi), scarica automaticamente songs.json dal server
-  try {
-    const response = await fetch("./songs.json?v=" + Date.now()); // Query string per evitare la cache del browser
-    if (response.ok) {
-      const remoteSongs = await response.json();
-      if (Array.isArray(remoteSongs) && remoteSongs.length > 0) {
-        return remoteSongs;
-      }
-    }
-  } catch (err) {
-    console.log("Nessun file songs.json remoto trovato o errore di rete:", err);
-  }
-
   return [];
+}
+
+async function saveSongToSupabase(song) {
+  try {
+    const { error } = await _supabase.from('songs').upsert(song);
+    if (error) console.error("Errore salvataggio Supabase:", error.message);
+  } catch (err) {
+    console.error("Errore connessione Supabase:", err.message);
+  }
+}
+
+async function deleteSongFromSupabase(id) {
+  try {
+    const { error } = await _supabase.from('songs').delete().eq('id', id);
+    if (error) console.error("Errore eliminazione Supabase:", error.message);
+  } catch (err) {
+    console.error("Errore connessione Supabase:", err.message);
+  }
+}
+
+async function syncAllToSupabase(songsArray) {
+  try {
+    const { error } = await _supabase.from('songs').upsert(songsArray);
+    if (error) console.error("Errore sincronizzazione di massa Supabase:", error.message);
+  } catch (err) {
+    console.error("Errore connessione Supabase:", err.message);
+  }
 }
 
 function saveSongsToStorage(data) {
@@ -118,7 +146,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (dataActions) dataActions.style.display = "none";
   }
 
-  // Caricamento iniziale asincrono (Locale o master JSON da GitHub)
+  // Caricamento iniziale dei brani da Supabase / LocalStorage
   songsList = await loadInitialSongs();
   updateGenreCounts();
   renderSongs();
@@ -291,20 +319,22 @@ document.addEventListener("DOMContentLoaded", async () => {
           if (!confirmSave) return;
         }
 
+        const songObj = {
+          id: id || Date.now().toString(),
+          artist, photoUrl, title, year, decade, genre, youtubeUrl, movieTitle
+        };
+
         if (id) {
           const index = songsList.findIndex(s => s.id === id);
-          if (index !== -1) {
-            songsList[index] = { id, artist, photoUrl, title, year, decade, genre, youtubeUrl, movieTitle };
-          }
+          if (index !== -1) songsList[index] = songObj;
         } else {
-          const newSong = { 
-            id: Date.now().toString(), 
-            artist, photoUrl, title, year, decade, genre, youtubeUrl, movieTitle 
-          };
-          songsList.push(newSong);
+          songsList.push(songObj);
         }
 
+        // Salvataggio sia su Supabase che locale
         saveSongsToStorage(songsList);
+        await saveSongToSupabase(songObj);
+
         updateGenreCounts();
         renderSongs();
         closeModal();
@@ -795,11 +825,12 @@ window.editSong = function(id) {
   if (song) openModal(song);
 };
 
-window.deleteSong = function(id) {
+window.deleteSong = async function(id) {
   if (isReadOnly) return;
   if (confirm("Vuoi davvero eliminare questo brano?")) {
     songsList = songsList.filter(s => s.id !== id);
     saveSongsToStorage(songsList);
+    await deleteSongFromSupabase(id);
     updateGenreCounts();
     renderSongs();
   }
@@ -824,9 +855,8 @@ function importJSON(event) {
   const fileName = file.name.toLowerCase();
   const reader = new FileReader();
 
-  // Caso 1: File JSON (.json)
   if (fileName.endsWith('.json')) {
-    reader.onload = function(e) {
+    reader.onload = async function(e) {
       try {
         const data = JSON.parse(e.target.result);
         if (Array.isArray(data) && data.length > 0) {
@@ -835,9 +865,10 @@ function importJSON(event) {
             id: song.id || (Date.now() + idx).toString()
           }));
           saveSongsToStorage(songsList);
+          await syncAllToSupabase(songsList);
           updateGenreCounts();
           renderSongs();
-          alert(`Ripristino completato! Caricati ${songsList.length} brani.`);
+          alert(`Ripristino completato e sincronizzato su Supabase! Caricati ${songsList.length} brani.`);
         } else {
           alert("Il file JSON è vuoto o non valido.");
         }
@@ -846,16 +877,13 @@ function importJSON(event) {
       }
     };
     reader.readAsText(file, 'UTF-8');
-  } 
-  // Caso 2: File CSV / Excel (.csv o .txt)
-  else {
-    reader.onload = function(e) {
+  } else {
+    reader.onload = async function(e) {
       try {
         const content = e.target.result;
         const lines = content.split(/\r\n|\n/);
         const importedSongs = [];
 
-        // Rileva in automatico se il separatore è ';' oppure ','
         const firstLine = lines[0] || "";
         const separator = firstLine.includes(';') ? ';' : ',';
 
@@ -863,7 +891,6 @@ function importJSON(event) {
           const line = lines[i].trim();
           if (!line) continue;
 
-          // Splitta e pulisce le colonne da eventuali virgolette
           const cols = line.split(separator).map(c => c.replace(/^"|"$/g, '').trim());
 
           if (cols.length >= 2) {
@@ -894,9 +921,10 @@ function importJSON(event) {
         if (importedSongs.length > 0) {
           songsList = importedSongs;
           saveSongsToStorage(songsList);
+          await syncAllToSupabase(songsList);
           updateGenreCounts();
           renderSongs();
-          alert(`Ripristino completato da Excel/CSV! Caricati ${songsList.length} brani.`);
+          alert(`Ripristino completato e sincronizzato su Supabase! Caricati ${songsList.length} brani.`);
         } else {
           alert("Nessun brano valido estratto dal file CSV.");
         }
@@ -904,10 +932,9 @@ function importJSON(event) {
         alert("Errore nell'elaborazione del file CSV: " + err.message);
       }
     };
-    reader.readAsText(file, 'ISO-8859-1'); // Preserva accenti e caratteri italiani da Excel
+    reader.readAsText(file, 'ISO-8859-1');
   }
 
-  // Resetta l'input per permettere ri-selezioni immediate
   event.target.value = '';
 }
 
