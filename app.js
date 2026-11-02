@@ -802,27 +802,89 @@ function importJSON(event) {
   const file = event.target.files[0];
   if (!file) return;
 
+  const fileName = file.name.toLowerCase();
   const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (Array.isArray(data)) {
-        songsList = data.map((song, idx) => ({
-          ...song,
-          id: song.id || (Date.now() + idx).toString()
-        }));
-        saveSongsToStorage(songsList);
-        updateGenreCounts();
-        renderSongs();
-        alert(`Ripristino completato! Caricati ${songsList.length} brani.`);
-      } else {
-        alert("File non valido.");
+
+  // Caso 1: Importazione da File JSON
+  if (fileName.endsWith('.json')) {
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (Array.isArray(data)) {
+          songsList = data.map((song, idx) => ({
+            ...song,
+            id: song.id || (Date.now() + idx).toString()
+          }));
+          saveSongsToStorage(songsList);
+          updateGenreCounts();
+          renderSongs();
+          alert(`Ripristino completato! Caricati ${songsList.length} brani.`);
+        } else {
+          alert("File JSON non valido.");
+        }
+      } catch (err) {
+        alert("Errore nell'importazione del file JSON.");
       }
-    } catch (err) {
-      alert("Errore nell'importazione file JSON.");
-    }
-  };
-  reader.readAsText(file);
+    };
+    reader.readAsText(file);
+  } 
+  // Caso 2: Importazione da File CSV / Excel
+  else if (fileName.endsWith('.csv') || fileName.endsWith('.txt')) {
+    reader.onload = function(e) {
+      try {
+        const lines = e.target.result.split(/\r\n|\n/);
+        const importedSongs = [];
+
+        // Scorre le righe ignorando l'intestazione
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+
+          // Separazione dei campi per punto e comma (;) o virgola (,)
+          const cols = line.split(';').map(c => c.replace(/^"|"$/g, '').trim());
+
+          if (cols.length >= 2) {
+            const artist = cols[0] || '';
+            const title = cols[1] || '';
+            const year = cols[2] || '';
+            const genre = cols[3] || 'Pop';
+            const movieTitle = cols[4] || '';
+            const youtubeUrl = cols[5] || '';
+            const photoUrl = cols[6] || '';
+
+            if (artist || title) {
+              importedSongs.push({
+                id: (Date.now() + i).toString(),
+                artist,
+                title,
+                year,
+                genre,
+                movieTitle,
+                youtubeUrl,
+                photoUrl,
+                decade: calculateDecade(year)
+              });
+            }
+          }
+        }
+
+        if (importedSongs.length > 0) {
+          songsList = importedSongs;
+          saveSongsToStorage(songsList);
+          updateGenreCounts();
+          renderSongs();
+          alert(`Ripristino completato da Excel! Caricati ${songsList.length} brani.`);
+        } else {
+          alert("Nessun brano valido trovato nel file Excel/CSV.");
+        }
+      } catch (err) {
+        alert("Errore durante la lettura del file CSV.");
+      }
+    };
+    reader.readAsText(file);
+  } else {
+    alert("Formato file non supportato. Seleziona un file .json o .csv.");
+  }
 }
 
 function exportExcel() {
