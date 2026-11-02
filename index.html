@@ -12,9 +12,8 @@
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='orangeGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23ff9f43'/><stop offset='100%' stop-color='%23ff5252'/></linearGradient></defs><rect width='100' height='100' rx='22' fill='%230f172a'/><path d='M35 65 A 10 10 0 1 1 25 55 A 10 10 0 0 1 35 65 V 25 L 75 15 V 55 A 10 10 0 1 1 65 45 A 10 10 0 0 1 75 55 V 15' fill='url(%23orangeGrad)'/></svg>">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='orangeGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23ff9f43'/><stop offset='100%' stop-color='%23ff5252'/></linearGradient></defs><rect width='100' height='100' rx='22' fill='%230f172a'/><path d='M35 65 A 10 10 0 1 1 25 55 A 10 10 0 0 1 35 65 V 25 L 75 15 V 55 A 10 10 0 1 1 65 45 A 10 10 0 0 1 75 55 V 15' fill='url(%23orangeGrad)'/></svg>">
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root {
@@ -105,7 +104,6 @@
       gap: 0.75rem;
     }
 
-    /* Layout Affiancato Corretto */
     .main-layout {
       display: flex;
       flex: 1;
@@ -598,7 +596,7 @@
         <li><button class="nav-btn" data-genre="Hindi / Hindi Film Music">Hindi / Hindi Film Music</button></li>
         <li><button class="nav-btn" data-genre="House / Afro House">House / Afro House</button></li>
         <li><button class="nav-btn" data-genre="Jazz">Jazz</button></li>
-        <li><button class="nav-btn" data-genre="K-pop">K-pop</option></li>
+        <li><button class="nav-btn" data-genre="K-pop">K-pop</button></li>
         <li><button class="nav-btn" data-genre="Latino">Latino</button></li>
         <li><button class="nav-btn" data-genre="Metal / Punk">Metal / Punk</button></li>
         <li><button class="nav-btn" data-genre="Musica Classica">Musica Classica</button></li>
@@ -620,7 +618,7 @@
           <div class="data-actions">
             <button id="exportJsonBtn" class="btn btn-secondary">Esporta Backup</button>
             <label for="importJsonInput" class="btn btn-secondary">Importa Backup</label>
-            <input type="file" id="importJsonInput" accept=".json" style="display:none;">
+            <input type="file" id="importJsonInput" accept=".json,.csv,.txt" style="display:none;">
             <button id="exportExcelBtn" class="btn btn-secondary">Esporta Excel</button>
           </div>
         </div>
@@ -850,16 +848,17 @@
         </table>
       </div>
 
-     <div id="playerBarContainer" class="player-bar-container">
-  <p id="nowPlayingText" style="color: #10b981; font-weight: 700; margin-bottom: 0.5rem; font-size: 0.95rem;">In riproduzione: -</p>
-  
-  <audio id="continuousAudioPlayer" controls style="width: 100%; margin-bottom: 0.75rem;"></audio>
+      <div id="playerBarContainer" class="player-bar-container">
+        <p id="nowPlayingText" style="color: #10b981; font-weight: 700; margin-bottom: 0.5rem; font-size: 0.95rem;">In riproduzione: -</p>
+        
+        <audio id="continuousAudioPlayer" controls style="width: 100%; margin-bottom: 0.75rem;"></audio>
 
-  <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
-    <button id="prevTrackBtn" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">⏮️ Precedente</button>
-    <button id="nextTrackBtn" class="btn btn-playlist" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">⏭️ Successivo</button>
-  </div>
-</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+          <button id="prevTrackBtn" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">⏮️ Precedente</button>
+          <button id="nextTrackBtn" class="btn btn-playlist" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">⏭️ Successivo</button>
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button id="clearSelectionBtn" class="btn btn-secondary">Deseleziona Tutti</button>
         <button id="startQueueBtn" class="btn btn-playlist">▶️ Avvia Sequenza</button>
