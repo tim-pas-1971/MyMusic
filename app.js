@@ -848,6 +848,7 @@ window.deleteSong = async function(id) {
   }
 };
 
+// --- MODIFICA NOME ESPORTAZIONE ---
 function exportJSON() {
   if (isReadOnly) return;
   const oggi = new Date().toISOString().split('T')[0]; // Ottiene la data in formato YYYY-MM-DD
