@@ -2,7 +2,13 @@
 const SUPABASE_URL = "https://yksnrbfqzgdjkoqilloc.supabase.co";
 const SUPABASE_KEY = "sb_publishable_nTummrisgVmS2GNnQ_kkOg_0fN6Yj4N";
 
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  global: {
+    headers: {
+      'apikey': SUPABASE_KEY
+    }
+  }
+});
 
 // --- GESTIONE ARCHIVIO (SUPABASE / LOCALSTORAGE) ---
 async function loadInitialSongs() {
