@@ -14,17 +14,23 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
 async function loadInitialSongs() {
   try {
     const { data, error } = await _supabase.from('songs').select('*');
-    if (error) throw error;
+    if (error) {
+      console.error("Errore Supabase in SELECT:", error.message);
+      throw error;
+    }
 
     if (data && data.length > 0) {
+      console.log("Brani caricati correttamente da Supabase:", data.length);
       saveSongsToStorage(data);
       return data;
+    } else {
+      console.warn("Supabase ha risposto, ma la tabella 'songs' risulta vuota.");
     }
   } catch (err) {
-    console.error("Errore nel caricamento da Supabase, ricorso al backup locale:", err.message);
+    console.error("Errore nel caricamento da Supabase:", err.message);
   }
 
-  // Backup in LocalStorage se offline o prima migrazione
+  // Backup in LocalStorage se offline
   const localData = localStorage.getItem("mymusic_songs");
   if (localData) {
     try {
