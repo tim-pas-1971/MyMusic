@@ -850,10 +850,11 @@ window.deleteSong = async function(id) {
 
 function exportJSON() {
   if (isReadOnly) return;
+  const oggi = new Date().toISOString().split('T')[0]; // Ottiene la data in formato YYYY-MM-DD
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(songsList, null, 2));
   const a = document.createElement('a');
   a.setAttribute("href", dataStr);
-  a.setAttribute("download", "songs.json");
+  a.setAttribute("download", `MyMusic _ backup brani ${oggi}.json`);
   document.body.appendChild(a);
   a.click();
   a.remove();
